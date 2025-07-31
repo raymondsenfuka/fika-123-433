@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sender Dashboard | FikaConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+    <style>
+        /* Existing CSS from previous steps (if any, as provided in your file snippet) */
+        /* Ensure your styles.css contains dark mode toggles if desired */
+        body.dark-mode {
+            background-color: #111;
+            color: #e4e4e4;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        .dark-mode .card {
+            background-color: #222;
+            color: #e4e4e4;
+        }
+        .delivery-status {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pending { color: orange; }
+        .status-pickedup { color: blue; }
+        .status-intransit { color: #007bff; }
+        .status-delivered { color: green; }
+        .status-cancelled { color: red; }
+        .map-container {
+            height: 300px; /* Adjust as needed */
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h2>Sender Dashboard</h2>
+            <div>
+                <button class="btn btn-outline-secondary me-2" id="themeToggle">Toggle Dark Mode</button>
+                <button class="btn btn-danger" id="logoutButton">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mt-5">
+        <div class="mb-4">
+            <button class="btn btn-primary" onclick="window.location.href='book-new-delivery.html'">Book New Delivery</button>
+        </div>
+
+        <h3 class="mb-4">Your Active Deliveries</h3>
+        <div id="activeDeliveriesList" class="row">
+            <p id="loadingMessage">Loading your deliveries...</p>
+            <p id="noDeliveriesMessage" style="display: none;">You have no active deliveries yet. Book one!</p>
+        </div>
+
+        <h3 class="mb-4 mt-5">Completed Deliveries</h3>
+        <div id="completedDeliveriesList" class="row">
+             <p id="loadingCompletedMessage">Loading completed deliveries...</p>
+            <p id="noCompletedDeliveriesMessage" style="display: none;">No completed deliveries.</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDq3uO76nnqqPgPaFfXpOTEnFSXRqXneWU",
+            authDomain: "fika-connect-5f844.firebaseapp.com",
+            projectId: "fika-connect-5f844",
+            storageBucket: "fika-connect-5f844.appspot.com",
+            messagingSenderId: "492360448361",
+            appId: "1:492360448361:web:4ab28b2b9828371d4b2f4a"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const activeDeliveriesList = document.getElementById('activeDeliveriesList');
+        const completedDeliveriesList = document.getElementById('completedDeliveriesList');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const noDeliveriesMessage = document.getElementById('noDeliveriesMessage');
+        const loadingCompletedMessage = document.getElementById('loadingCompletedMessage');
+        const noCompletedDeliveriesMessage = document.getElementById('noCompletedDeliveriesMessage');
+
+        // Theme toggle
+        document.getElementById('themeToggle').onclick = () => {
+            document.body.classList.toggle('dark-mode');
+        };
+
+        // Logout
+        document.getElementById('logoutButton').onclick = () => {
+            auth.signOut().then(() => {
+                console.log('User signed out.');
+                window.location.href = 'login.html'; // Redirect to login page
+            }).catch((error) => {
+                console.error("Error signing out:", error);
+                alert("Error logging out: " + error.message);
+            });
+        };
+
+        // Object to hold active Leaflet map instances for tracking
+        const activeTrackingMaps = {};
+
+        // Authentication state listener
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // User is signed in
+                console.log('User is logged in:', user.email, user.uid);
+                // Fetch user-specific bookings
+                fetchUserBookings(user.uid);
+                // Clean up any previous maps/listeners if user logs in again
+                cleanupTrackingMaps();
+
+            } else {
+                // User is signed out, redirect to login page
+                console.log('No user logged in. Redirecting to login.');
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Function to fetch and display user's bookings
+        async function fetchUserBookings(userId) {
+            loadingMessage.style.display = 'block';
+            noDeliveriesMessage.style.display = 'none';
+            activeDeliveriesList.innerHTML = ''; // Clear previous listings
+
+            loadingCompletedMessage.style.display = 'block';
+            noCompletedDeliveriesMessage.style.display = 'none';
+            completedDeliveriesList.innerHTML = ''; // Clear previous listings
+
+            try {
+                // Fetch active bookings (not delivered or cancelled)
+                db.collection('bookings')
+                    .where('customerId', '==', userId)
+                    .where('status', 'not-in', ['Delivered', 'Cancelled'])
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot((snapshot) => {
+                        loadingMessage.style.display = 'none';
+                        if (snapshot.empty) {
+                            noDeliveriesMessage.style.display = 'block';
+                            activeDeliveriesList.innerHTML = '';
+                        } else {
+                            noDeliveriesMessage.style.display = 'none';
+                            activeDeliveriesList.innerHTML = '';
+                            let hasActive = false;
+                            snapshot.forEach(doc => {
+                                const booking = { id: doc.id, ...doc.data() };
+                                displayBooking(booking, activeDeliveriesList);
+                                hasActive = true;
+                                if (booking.assignedDriver && booking.status !== 'Delivered' && booking.status !== 'Cancelled') {
+                                    setupDriverTracking(booking.id, booking.assignedDriver);
+                                }
+                            });
+                            if (!hasActive) {
+                                noDeliveriesMessage.style.display = 'block';
+                            }
+                        }
+                    }, (error) => {
+                        console.error("Error listening to active bookings:", error);
+                        loadingMessage.textContent = "Error loading deliveries.";
+                    });
+
+                // Fetch completed bookings (delivered or cancelled)
+                db.collection('bookings')
+                    .where('customerId', '==', userId)
+                    .where('status', 'in', ['Delivered', 'Cancelled'])
+                    .orderBy('createdAt', 'desc')
+                    .onSnapshot((snapshot) => {
+                        loadingCompletedMessage.style.display = 'none';
+                        if (snapshot.empty) {
+                            noCompletedDeliveriesMessage.style.display = 'block';
+                            completedDeliveriesList.innerHTML = '';
+                        } else {
+                            noCompletedDeliveriesMessage.style.display = 'none';
+                            completedDeliveriesList.innerHTML = '';
+                            let hasCompleted = false;
+                            snapshot.forEach(doc => {
+                                const booking = { id: doc.id, ...doc.data() };
+                                displayBooking(booking, completedDeliveriesList);
+                                hasCompleted = true;
+                            });
+                             if (!hasCompleted) {
+                                noCompletedDeliveriesMessage.style.display = 'block';
+                            }
+                        }
+                    }, (error) => {
+                        console.error("Error listening to completed bookings:", error);
+                        loadingCompletedMessage.textContent = "Error loading completed deliveries.";
+                    });
+
+            } catch (error) {
+                console.error("Error fetching user bookings:", error);
+                loadingMessage.textContent = "Could not load deliveries.";
+                noDeliveriesMessage.style.display = 'block';
+            }
+        }
+
+        function displayBooking(booking, targetListElement) {
+            const cardHtml = `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card">
+                        <h5>Booking ID: ${booking.id.substring(0, 6)}...</h5>
+                        <p><strong>Status:</strong> <span class="delivery-status status-${booking.status.toLowerCase().replace(/\s/g, '')}">${booking.status}</span></p>
+                        <p><strong>Pickup:</strong> ${booking.pickupLocation}</p>
+                        <p><strong>Drop-off:</strong> ${booking.dropoffLocation}</p>
+                        <p><strong>Recipient:</strong> ${booking.recipientName} (${booking.recipientPhone})</p>
+                        <p><strong>Parcel:</strong> ${booking.weight} kg, ${booking.size} (${booking.fragile ? 'Fragile' : 'Not Fragile'})</p>
+                        <p><strong>Fare:</strong> UGX ${booking.totalAmount ? booking.totalAmount.toLocaleString() : 'Calculating...'}</p>
+                        ${booking.imageUrl ? `<p><img src="${booking.imageUrl}" alt="Parcel Image" style="max-width: 100px; border-radius: 5px;"></p>` : ''}
+                        ${booking.assignedDriver ? `<p><strong>Assigned Driver:</strong> ${booking.assignedDriverName || 'Loading...'}</p>` : ''}
+                        ${booking.status !== 'Delivered' && booking.status !== 'Cancelled' ? `<div id="map-${booking.id}" class="map-container"></div>` : ''}
+                    </div>
+                </div>
+            `;
+            targetListElement.innerHTML += cardHtml;
+        }
+
+        function setupDriverTracking(bookingId, driverId) {
+            // Unsubscribe from previous listener if exists for this booking
+            if (activeTrackingMaps[bookingId] && activeTrackingMaps[bookingId].unsubscribe) {
+                activeTrackingMaps[bookingId].unsubscribe();
+                if (activeTrackingMaps[bookingId].map) {
+                    activeTrackingMaps[bookingId].map.remove();
+                }
+            }
+
+            const mapId = `map-${bookingId}`;
+            const mapElement = document.getElementById(mapId);
+            if (!mapElement) {
+                console.warn(`Map element ${mapId} not found for tracking.`);
+                return;
+            }
+
+            // Initialize Leaflet map
+            const map = L.map(mapId).setView([0.347596, 32.582520], 13); // Default view (Kampala)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            let driverMarker = null;
+
+            // Listen for driver location updates
+            const unsubscribe = db.collection('driverLocations').doc(driverId)
+                .onSnapshot((docSnapshot) => {
+                    if (docSnapshot.exists) {
+                        const driverLocationData = docSnapshot.data();
+                        if (driverLocationData && driverLocationData.geopoint) {
+                            const lat = driverLocationData.geopoint.latitude;
+                            const lng = driverLocationData.geopoint.longitude;
+
+                            if (driverMarker) {
+                                driverMarker.setLatLng([lat, lng]);
+                            } else {
+                                driverMarker = L.marker([lat, lng]).addTo(map)
+                                    .bindPopup('Driver Location').openPopup();
+                            }
+                            map.setView([lat, lng]); // Center map on driver location
+                        }
+                    } else {
+                        console.log(`Driver document for ID ${driverId} does not exist for tracking.`);
+                        if (driverMarker) {
+                            map.removeLayer(driverMarker);
+                            driverMarker = null;
+                        }
+                    }
+                }, (error) => {
+                    console.error("Error listening to driver location:", error);
+                });
+
+            activeTrackingMaps[bookingId] = { map, driverMarker, unsubscribe };
+        }
+
+        // Function to clean up all active map instances and their listeners
+        function cleanupTrackingMaps() {
+            for (const bookingId in activeTrackingMaps) {
+                if (activeTrackingMaps[bookingId].unsubscribe) {
+                    activeTrackingMaps[bookingId].unsubscribe(); // Unsubscribe from Firestore listener
+                }
+                if (activeTrackingMaps[bookingId].map) {
+                    activeTrackingMaps[bookingId].map.remove(); // Remove Leaflet map instance
+                }
+                delete activeTrackingMaps[bookingId];
+            }
+            console.log("Cleaned up all active tracking maps.");
+        }
+
+        // Call cleanup on page unload to prevent memory leaks and unnecessary listeners
+        window.addEventListener('beforeunload', cleanupTrackingMaps);
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | FikaConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    </head>
+   <style>
+    /* Enhanced Professional & Modern Styling */
+    :root {
+        --primary-color: #28a745;
+        --primary-dark: #1e7e34;
+        --secondary-color: #6c757d;
+        --accent-color: #28a745;
+        --danger-color: #dc3545;
+        --light-bg: #f8f9fa;
+        --dark-text: #343a40;
+        --border-color: #dee2e6;
+        --white: #ffffff;
+        --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #433e2a 0%, #725309 100%);
+        color: var(--dark-text);
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    /* Header Enhancements */
+    .page-header {
+        background-color: var(--white);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        padding: 15px 0;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .page-header .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 1.8em;
+    }
+
+    .page-header h1 a {
+        text-decoration: none;
+        color: var(--primary-color);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+    }
+
+    .page-header h1 a::before {
+        content: "🚚";
+        margin-right: 10px;
+        font-size: 1.5em;
+    }
+
+    .page-header nav {
+        margin-top: 5px;
+    }
+
+    .page-header nav a {
+        text-decoration: none;
+        color: var(--dark-text);
+        padding: 10px 15px;
+        margin-left: 10px;
+        font-weight: 600;
+        transition: var(--transition);
+        border-radius: 30px;
+        font-size: 0.95em;
+    }
+
+    .page-header nav a:hover {
+        color: var(--white);
+        background-color: var(--primary-color);
+    }
+
+    /* Authentication Page Enhancements */
+    .auth-page {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        flex-grow: 1;
+    }
+
+    .auth-container {
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+    }
+
+    .auth-box {
+        background-color: var(--white);
+        padding: 50px 45px;
+        border-radius: 15px;
+        box-shadow: var(--card-shadow);
+        width: 100%;
+        max-width: 500px;
+        text-align: center;
+        box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-box::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, var(--primary-color), #20c997);
+    }
+
+    .auth-box h2 {
+        color: var(--primary-color);
+        margin-bottom: 15px;
+        font-size: 2.2em;
+        font-weight: 700;
+    }
+
+    .auth-box .fas {
+        margin-right: 8px;
+        color: var(--primary-color);
+    }
+
+    .auth-tagline {
+        color: #6c757d;
+        margin-bottom: 35px;
+        font-size: 1.1em;
+        font-weight: 400;
+    }
+
+    /* Input Group Enhancements */
+    .input-group {
+        margin-bottom: 25px;
+        text-align: left;
+        position: relative;
+    }
+
+    .input-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: var(--dark-text);
+        font-size: 1em;
+    }
+
+    .input-group input {
+        width: 100%;
+        padding: 16px 20px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 1em;
+        box-sizing: border-box;
+        transition: var(--transition);
+        background-color: #f8f9fa;
+    }
+
+    .input-group input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        background-color: var(--white);
+        box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.1);
+    }
+
+    /* Password Toggle Enhancements */
+    .password-group {
+        position: relative;
+    }
+
+    .password-toggle-btn {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2em;
+        color: var(--secondary-color);
+        transition: var(--transition);
+        padding: 5px;
+        border-radius: 5px;
+    }
+
+    .password-toggle-btn:hover {
+        color: var(--primary-color);
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+
+    /* Button Enhancements */
+    .auth-btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 1.1em;
+        font-weight: 600;
+        border-radius: 10px;
+        margin-top: 10px;
+        background: linear-gradient(90deg, var(--primary-color), #20c997);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+
+    .auth-btn:hover {
+        background: linear-gradient(90deg, var(--primary-dark), #1baa7f);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
+
+    .auth-btn:disabled {
+        background: linear-gradient(90deg, #a5d6b4, #9bd1c0);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Message Enhancements */
+    .auth-message {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 10px;
+        font-size: 0.95em;
+        text-align: center;
+        display: block;
+        line-height: 1.4;
+        transition: var(--transition);
+        font-weight: 500;
+    }
+
+    .auth-message:empty {
+        display: none;
+    }
+
+    .auth-message.error-message {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .auth-message.success-message {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .auth-message.info-message {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    /* Footer Text Enhancements */
+    .auth-footer-text {
+        margin-top: 25px;
+        font-size: 0.95em;
+        color: #555;
+    }
+
+    .auth-footer-text a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+        transition: var(--transition);
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+
+    .auth-footer-text a:hover {
+        text-decoration: underline;
+        color: var(--primary-dark);
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+
+    /* Page Footer */
+    .page-footer {
+        background-color: var(--dark-text);
+        color: #fff;
+        text-align: center;
+        padding: 25px 0;
+        font-size: 0.95em;
+        margin-top: auto;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .page-header .container {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .page-header nav {
+            margin-top: 15px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .page-header nav a {
+            margin: 5px 8px;
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .auth-container {
+            padding: 30px 15px;
+        }
+
+        .auth-box {
+            padding: 40px 30px;
+            border-radius: 12px;
+        }
+
+        .auth-box h2 {
+            font-size: 1.9em;
+            margin-bottom: 15px;
+        }
+
+        .auth-tagline {
+            font-size: 1em;
+            margin-bottom: 30px;
+        }
+
+        .input-group input {
+            padding: 14px 18px;
+            font-size: 0.95em;
+        }
+
+        .auth-btn {
+            padding: 14px;
+            font-size: 1.05em;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-header h1 {
+            font-size: 1.6em;
+        }
+
+        .page-header nav {
+            justify-content: space-around;
+        }
+
+        .page-header nav a {
+            margin: 5px;
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+
+        .auth-box {
+            padding: 35px 25px;
+        }
+
+        .auth-box h2 {
+            font-size: 1.7em;
+        }
+
+        .auth-tagline {
+            font-size: 0.95em;
+        }
+
+        .input-group input,
+        .auth-btn {
+            font-size: 0.9em;
+        }
+    }
+
+    /* Animation for form elements */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-box {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .auth-box > *:nth-child(1) { animation-delay: 0.1s; }
+    .auth-box > *:nth-child(2) { animation-delay: 0.2s; }
+    .auth-box > *:nth-child(3) { animation-delay: 0.3s; }
+    .auth-box > *:nth-child(4) { animation-delay: 0.4s; }
+    .auth-box > *:nth-child(5) { animation-delay: 0.5s; }
+
+    [class*="auth-box"] > * {
+        opacity: 0;
+        animation: fadeIn 0.6s forwards;
+    }
+</style>
+<body class="auth-page">
+
+        </div>
+    </header>
+
+    <main class="auth-container">
+        <div class="auth-box">
+            <h2><i class="fas fa-sign-in-alt"></i> FikaConnect</h2>
+
+            <p class="auth-tagline">Access your deliveries and manage your transport.</p>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="you@example.com" required>
+                </div>
+                <div class="input-group password-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                    <button type="button" id="togglePassword" class="password-toggle-btn">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="auth-message" id="loginMessage"></div>
+                <button type="submit" class="primary-btn auth-btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Log In
+                </button>
+            </form>
+
+            <p class="auth-footer-text">Don't have an account? <a href="signup.html">Sign up here</a></p>
+            <p class="auth-footer-text"><a href="#" id="forgotPasswordLink">Forgot Password?</a></p>
+            <p> Would you love to Know  <a href="about.html">About Us ? </a></p>
+        </div>
+
+
+       
+    </main>
+
+    <footer class="page-footer">
+        <div class="container">
+            <p>&copy; 2025 FikaConnect — Smart Logistics for East Africa</p>
+        </div>
+    </footer>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    // Your Firebase Configuration (replace with your actual config)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDq3uO76nnqqPgPaFfXpOTEnFSXRqXneWU", // Ensure this is your correct Firebase API key
+        authDomain: "fika-connect-5f844.firebaseapp.com",
+        projectId: "fika-connect-5f844",
+        storageBucket: "fika-connect-5f844.appspot.com",
+        messagingSenderId: "124223307329",
+        appId: "1:124223307329:web:76c547b91dcd25205550c0"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginMessage = document.getElementById('loginMessage');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const togglePasswordBtn = document.getElementById('togglePassword'); // New: Password toggle button
+
+    // --- Helper function to handle user redirection based on role ---
+   // In the handleUserRoleAndRedirect function in login.html
+async function handleUserRoleAndRedirect(user) {
+    if (!user) {
+        return;
+    }
+
+    const adminDocRef = doc(db, "admins", user.uid);
+    const adminDocSnap = await getDoc(adminDocRef);
+
+    if (adminDocSnap.exists() && adminDocSnap.data().isAdmin === true) {
+        console.log("Admin user logged in. Redirecting to admin dashboard.");
+        window.location.href = 'admin-dashboard.html';
+        return;
+    }
+
+    const userDocRef = doc(db, "users", user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        if (userData.isDriver) {
+            console.log("Driver user logged in. Redirecting to driver dashboard.");
+            localStorage.setItem('currentDriverId', user.uid);
+            window.location.href = 'driver-dashboard.html';
+            return;
+        } else {
+            console.log("Sender/Customer logged in. Redirecting to sender dashboard.");
+            window.location.href = 'sender-dasboard.html';
+            return;
+        }
+    } else {
+        console.warn("User profile incomplete or not found in 'users' collection for UID:", user.uid);
+        // Create a basic user profile with default sender role
+        try {
+            await setDoc(doc(db, "users", user.uid), {
+                email: user.email,
+                isDriver: false, // Default to sender
+                createdAt: serverTimestamp()
+            });
+            window.location.href = 'sender-dasboard.html';
+        } catch (error) {
+            console.error("Error creating user profile:", error);
+            loginMessage.textContent = 'Error creating user profile. Please try again or contact support.';
+            loginMessage.className = 'auth-message error-message';
+            await auth.signOut();
+        }
+    }
+}
+
+    // --- Check auth state on page load (only redirect if already logged in with complete profile) ---
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // Check if user has a complete profile before redirecting
+            try {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    // Only redirect if user has complete profile data
+                    if (userData.name && userData.email) {
+                        await handleUserRoleAndRedirect(user);
+                    } else {
+                        console.log("User profile incomplete, staying on login page.");
+                    }
+                } else {
+                    // Check if user is admin
+                    const adminDocRef = doc(db, "admins", user.uid);
+                    const adminDocSnap = await getDoc(adminDocRef);
+                    
+                    if (adminDocSnap.exists() && adminDocSnap.data().isAdmin === true) {
+                        window.location.href = 'admin-dashboard.html';
+                    } else {
+                        console.log("No user profile found, staying on login page.");
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking user profile:", error);
+                // Stay on login page on error
+            }
+        }
+    });
+
+    // --- Handle Login Form Submission ---
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging In...';
+        loginMessage.textContent = '';
+        loginMessage.className = 'auth-message';
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            await handleUserRoleAndRedirect(user);
+        } catch (error) {
+            console.error("Login Error:", error);
+            let errorMessage = 'An unknown error occurred.';
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    errorMessage = 'Invalid email address.';
+                    break;
+                case 'auth/user-disabled':
+                    errorMessage = 'Your account has been disabled.';
+                    break;
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                    errorMessage = 'Incorrect email or password.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = 'Too many login attempts. Please try again later.';
+                    break;
+                default:
+                    errorMessage = 'Login failed. Please check your credentials.';
+                    break;
+            }
+            loginMessage.textContent = errorMessage;
+            loginMessage.className = 'auth-message error-message';
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Log In';
+        }
+    });
+
+    // --- Forgot Password logic ---
+    forgotPasswordLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = emailInput.value;
+        if (!email) {
+            loginMessage.textContent = 'Please enter your email address to reset password.';
+            loginMessage.className = 'auth-message info-message';
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            loginMessage.textContent = 'Password reset email sent. Check your inbox.';
+            loginMessage.className = 'auth-message success-message';
+        } catch (error) {
+            console.error("Password Reset Error:", error);
+            let errorMessage = 'Failed to send password reset email.';
+            if (error.code === 'auth/user-not-found') {
+                errorMessage = 'No user found with that email address.';
+            }
+            loginMessage.textContent = errorMessage;
+            loginMessage.className = 'auth-message error-message';
+        }
+    });
+
+    // --- NEW: Password Toggle Logic ---
+    if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            // Toggle the eye icon
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book & Track | FikaConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        /* Specific CSS for the new layout (move to styles.css later) */
+        .initial-view {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        #currentLocationMap {
+            height: 400px;
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .delivery-type-selection-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+
+        .delivery-type-selection-buttons .option-btn {
+            flex: 1; /* Distribute space evenly */
+            min-width: 250px; /* Minimum width for buttons before wrapping */
+            padding: 20px 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: 2px solid var(--primary-color);
+            background-color: #fff;
+            color: var(--primary-color);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .delivery-type-selection-buttons .option-btn i {
+            font-size: 2.5em;
+            color: var(--primary-color);
+        }
+
+        .delivery-type-selection-buttons .option-btn:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+        }
+
+        .delivery-type-selection-buttons .option-btn:hover i {
+            color: #fff;
+        }
+
+        .delivery-type-selection-buttons .option-btn.active-option {
+            background-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        .delivery-type-selection-buttons .option-btn.active-option i {
+            color: #fff;
+        }
+
+        /* Form section styling */
+        .card.panel {
+            display: none; /* Hide panels by default */
+        }
+        .card.panel.active {
+            display: block; /* Show active panel */
+            animation: fadeIn 0.5s ease-out; /* Smooth transition */
+        }
+        .booking-form-steps {
+            display: none; /* Hide the entire form section initially */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Collapsible section styling */
+        .collapsible-header {
+            background-color: #f2f2f2;
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--dark-text);
+            border-radius: 8px 8px 0 0; /* Only top corners rounded */
+        }
+        .collapsible-header.closed {
+            border-radius: 8px; /* Fully rounded when closed */
+        }
+        .collapsible-header:hover {
+            background-color: #e6e6e6;
+        }
+        .collapsible-header i {
+            transition: transform 0.3s ease;
+        }
+        .collapsible-header.active i {
+            transform: rotate(90deg);
+        }
+        .collapsible-content {
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            display: none; /* Hidden by default */
+            overflow: hidden;
+            animation: slideDown 0.4s ease-out;
+        }
+        .collapsible-content.active {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from { max-height: 0; opacity: 0; }
+            to { max-height: 1000px; opacity: 1; } /* Use max-height for slide effect */
+        }
+
+        /* Ensure .card styling applies correctly to sections within the form */
+        .booking-form-steps > section.card {
+            margin-bottom: 25px; /* Space between sections */
+            border-radius: 8px;
+            overflow: hidden; /* Contains children's border-radius */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Lighter shadow for inner cards */
+        }
+        .booking-form-steps > section.card .form-group {
+            padding: 0 15px; /* Adjust padding for form groups within collapsible sections */
+        }
+        .booking-form-steps > section.card .card-content {
+            padding: 20px;
+        }
+
+        /* --- Dropdown (select) styling --- */
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+            color: #333;
+            background-color: #fff;
+            /* Optional: Remove default browser arrow and add custom one */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M5%206l5%205%205-5z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 1em;
+            cursor: pointer;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+            outline: none;
+        }
+
+        select:disabled {
+            background-color: #f0f0f0;
+            color: #777;
+            cursor: not-allowed;
+        }
+
+        /* Styling for the disabled option in select */
+        select option[value=""][disabled] {
+            color: #999;
+        }
+
+        /* Style for required fields feedback */
+        input:invalid:not(:focus):not(:placeholder-shown),
+        select:invalid:not(:focus):not([value=""]) {
+            border-color: #dc3545; /* Red border */
+        }
+
+        input:invalid:not(:focus):not(:placeholder-shown) + label::after,
+        select:invalid:not(:focus):not([value=""]) + label::after {
+            content: " (Required)";
+            color: #dc3545;
+            font-size: 0.8em;
+        }
+
+        /* New: Success message styling */
+        .booking-success-message {
+            display: none; /* Hidden by default */
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+            animation: fadeInScale 0.5s ease-out;
+        }
+
+        .booking-success-message h3 {
+            color: #155724;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        .booking-success-message p {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .booking-success-message .primary-btn {
+            background-color: #28a745; /* Green for success action */
+            border-color: #28a745;
+        }
+        .booking-success-message .primary-btn:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <header class="page-header">
+        <div class="container">
+            <h1><a href="landing.html">FikaConnect</a></h1>
+            <nav class="main-nav">
+                <a href="sender-dashboard.html">Dashboard</a>
+        
+                <a href="about.html">About Us</a>
+                <a href="#" id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container form-container auth-form">
+        <h2><i class="fas fa-shipping-fast"></i> Book a New Delivery</h2>
+
+        <div id="initialView" class="initial-view">
+            <h3><i class="fas fa-map-marker-alt"></i> Your Current Location</h3>
+            <div id="currentLocationMap"></div>
+            <p id="locationStatus" class="small-text">Getting your location...</p>
+
+            <div class="delivery-type-selection-buttons">
+                <button type="button" class="option-btn" id="directDeliveryBtn" data-type="direct_delivery">
+                    <i class="fas fa-motorcycle"></i> Direct Delivery <br> (To Specific Address)
+                </button>
+                <button type="button" class="option-btn" id="collectionPointBtn" data-type="collection_point_pickup">
+                    <i class="fas fa-warehouse"></i> Via FikaConnect Centers <br> (Center to Center)
+                </button>
+            </div>
+        </div>
+
+        <form id="bookingForm" class="booking-form-steps">
+
+            <section class="card" id="detailsSection">
+                <div class="collapsible-header active" data-target="detailsContent">
+                    <span><i class="fas fa-user-circle"></i> 1. Delivery Details</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="collapsible-content active" id="detailsContent">
+                    <div class="panel" id="directDeliveryPanel">
+                        <h3>Direct Delivery Details</h3>
+                        <div class="form-group">
+                            <label for="pickupLocation">Pickup Location (Your Address)</label>
+                            <input type="text" id="pickupLocation" placeholder="e.g., Kampala, Makerere Hill Rd" required>
+                            <small class="help-text">Be specific for better accuracy (e.g., "Makerere Hill Rd, Kampala, Uganda").</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="dropoffLocation">Drop-off Location (Recipient's Address)</label>
+                            <input type="text" id="dropoffLocation" placeholder="e.g., Entebbe, Lugard Rd" required>
+                            <small class="help-text">Be specific for better accuracy (e.g., "Lugard Rd, Entebbe, Uganda").</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipientNameDirect">Recipient Name</label>
+                            <input type="text" id="recipientNameDirect" placeholder="Recipient's Full Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipientContactDirect">Recipient Contact</label>
+                            <input type="tel" id="recipientContactDirect" placeholder="e.g., 07XXXXXXXX" required>
+                        </div>
+                    </div>
+
+                    <div class="panel" id="collectionPointPanel">
+                        <h3>FikaConnect Center Transfer Details</h3>
+                        <div class="form-group">
+                            <label for="pickupPoint">Select Pickup FikaConnect Center</label>
+                            <select id="pickupPoint" required>
+                                <option value="">Select a center</option>
+                            </select>
+                            <small id="pickupPointLoadStatus" class="help-text">Loading collection points...</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="dropoffPoint">Select Destination FikaConnect Center</label>
+                            <select id="dropoffPoint" required>
+                                <option value="">Select a center</option>
+                            </select>
+                            <small id="dropoffPointLoadStatus" class="help-text"></small>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipientNameCollection">Recipient Name (at destination center)</label>
+                            <input type="text" id="recipientNameCollection" placeholder="Recipient's Full Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipientContactCollection">Recipient Contact (at destination center)</label>
+                            <input type="tel" id="recipientContactCollection" placeholder="e.g., 07XXXXXXXX" required>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="collapsible-header closed" data-target="parcelContent">
+                    <span><i class="fas fa-box"></i> 2. Parcel Details</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="collapsible-content" id="parcelContent">
+                    <div class="form-group">
+                        <label for="cargoType">Cargo Type</label>
+                        <select id="cargoType" required>
+                            <option value="">Select type</option>
+                            <option value="Documents">Documents</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Apparel">Apparel</option>
+                            <option value="Food/Perishables">Food/Perishables</option>
+                            <option value="Fragile Items">Fragile Items</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="packageDescription">Package Description</label>
+                        <textarea id="packageDescription" placeholder="e.g., Small box with electronics" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="packageWeight">Estimated Weight (kg)</label>
+                        <input type="number" id="packageWeight" placeholder="e.g., 5" min="0.1" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="isFragile">Is this package fragile?</label>
+                        <input type="checkbox" id="isFragile">
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="collapsible-header closed" data-target="priceContent">
+                    <span><i class="fas fa-calculator"></i> 3. Review and Price</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="collapsible-content" id="priceContent">
+                    <button type="button" id="calculatePriceBtn" class="primary-btn calculate-btn"><i class="fas fa-dollar-sign"></i> Calculate Price</button>
+                    <div id="priceSummary" class="price-summary" style="display: none;">
+                        <p>Estimated Distance: <span id="estimatedDistance">--</span> km</p>
+                        <p>Estimated Time: <span id="estimatedTime">--</span> min</p>
+                        <p class="total-price">Total Price: <span id="totalPrice">UGX 0</span></p>
+                        <p class="small-text">Driver Earning: <span id="driverEarning">UGX 0</span></p>
+                    </div>
+                </div>
+            </section>
+
+         <div class="collapsible-section">
+    <div class="collapsible-header closed" data-target="priceSummaryContent" id="priceSectionHeader">
+        <h3><i class="fas fa-money-bill-wave"></i> 3. Price Summary</h3>
+        <span class="toggle-icon fas fa-chevron-down"></span>
+    </div>
+    <div class="collapsible-content" id="priceSummaryContent">
+        <div class="booking-summary" id="priceSummary">
+            <p>Estimated Distance: <span id="estimatedDistance">--</span> km</p>
+            <p>Estimated Time: <span id="estimatedTime">--</span> mins</p>
+            <p class="total-price">Total Price: <span id="totalPrice">UGX 0</span></p>
+            <p class="driver-earning">Driver Earning: <span id="driverEarning">UGX 0</span></p>
+            <button type="button" class="primary-btn" id="proceedToPaymentBtn" style="display: none;"><i class="fas fa-arrow-right"></i> Proceed to Payment</button>
+        </div>
+        <div class="booking-message" id="generalMessage" style="display: none;"></div>
+        <div class="loading-spinner" id="loadingMessage" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
+        </div>
+    </div>
+</div>
+
+<div class="booking-success-message" id="bookingSuccessMessage" style="display: none;">
+    <h2><i class="fas fa-check-circle"></i> Booking Initiated!</h2>
+    <p>Your booking ID is: <span id="bookedBookingId"></span></p>
+    <p>Please proceed to complete payment on the next page.</p>
+    <p class="note">You will receive an SMS from FikaConnect shortly with payment instructions.</p>
+    <div class="success-actions">
+        <button type="button" class="secondary-btn" id="bookNewDeliveryBtn"><i class="fas fa-plus-circle"></i> Book New Delivery</button>
+        <button type="button" class="primary-btn" id="viewDeliveriesBtn"><i class="fas fa-truck"></i> View My Deliveries</button>
+    </div>
+</div>
+    </main>
+
+    <footer class="page-footer">
+        <div class="container">
+            <p>&copy; 2025 FikaConnect — Smart Logistics for East Africa</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_Maps_API_KEY&libraries=places&callback=initGoogleMapsApi"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-functions.js";
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDq3uO76nnqqPgPaFfXpOTEnFSXRqXneWU",
+            authDomain: "fika-connect-5f844.firebaseapp.com",
+            projectId: "fika-connect-5f844",
+            storageBucket: "fika-connect-5f844.appspot.com",
+            messagingSenderId: "124223307329",
+            appId: "1:124223307329:web:76c547b91dcd25205550c0"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const functions = getFunctions(app);
+
+        // --- DOM Elements ---
+        const logoutBtn = document.getElementById('logoutBtn');
+        const menuToggle = document.querySelector('.menu-toggle');
+        const mainNav = document.querySelector('.main-nav');
+
+        // New Initial View Elements
+        const initialView = document.getElementById('initialView');
+        const currentLocationMapDiv = document.getElementById('currentLocationMap');
+        const locationStatus = document.getElementById('locationStatus');
+        const directDeliveryBtn = document.getElementById('directDeliveryBtn');
+        const collectionPointBtn = document.getElementById('collectionPointBtn');
+
+        // Form Section Elements
+        const bookingForm = document.getElementById('bookingForm'); // This is now the container for all steps
+        const detailsSectionHeader = document.querySelector('#detailsSection .collapsible-header');
+        const detailsContent = document.getElementById('detailsContent');
+        const parcelSectionHeader = document.querySelector('#parcelContent').closest('.card').querySelector('.collapsible-header');
+        const parcelContent = document.getElementById('parcelContent');
+        const priceSectionHeader = document.querySelector('#priceContent').closest('.card').querySelector('.collapsible-header');
+        const priceContent = document.getElementById('priceContent');
+        // REMOVED: const paymentSectionHeader = document.querySelector('#paymentContent').closest('.card').querySelector('.collapsible-header');
+        // REMOVED: const paymentContent = document.getElementById('paymentContent'); // No longer needed here
+
+        const directDeliveryPanel = document.getElementById('directDeliveryPanel');
+        const collectionPointPanel = document.getElementById('collectionPointPanel');
+        const pickupLocationInput = document.getElementById('pickupLocation');
+        const dropoffLocationInput = document.getElementById('dropoffLocation');
+        const recipientNameDirectInput = document.getElementById('recipientNameDirect');
+        const recipientContactDirectInput = document.getElementById('recipientContactDirect');
+        const pickupPointSelect = document.getElementById('pickupPoint');
+        const dropoffPointSelect = document.getElementById('dropoffPoint');
+        const pickupPointLoadStatus = document.getElementById('pickupPointLoadStatus'); // New status element
+        const dropoffPointLoadStatus = document.getElementById('dropoffPointLoadStatus'); // New status element
+        const recipientNameCollectionInput = document.getElementById('recipientNameCollection');
+        const recipientContactCollectionInput = document.getElementById('recipientContactCollection');
+        const cargoTypeSelect = document.getElementById('cargoType');
+        const packageDescriptionTextarea = document.getElementById('packageDescription');
+        const packageWeightInput = document.getElementById('packageWeight');
+        const isFragileCheckbox = document.getElementById('isFragile');
+        const calculatePriceBtn = document.getElementById('calculatePriceBtn');
+        const priceSummaryDiv = document.getElementById('priceSummary');
+        const estimatedDistanceSpan = document.getElementById('estimatedDistance');
+        const estimatedTimeSpan = document.getElementById('estimatedTime');
+        const totalPriceSpan = document.getElementById('totalPrice');
+        const driverEarningSpan = document.getElementById('driverEarning');
+        // REMOVED: const confirmBookingBtn = document.getElementById('confirmBookingBtn');
+        const loadingMessageDiv = document.getElementById('loadingMessage');
+        const generalMessageDiv = document.getElementById('generalMessage'); // Renamed from bookingMessageDiv
+
+        const bookingSuccessMessage = document.getElementById('bookingSuccessMessage'); // New success message container
+        const bookedBookingIdSpan = document.getElementById('bookedBookingId');
+        // REMOVED: const bookedPriceSpan = document.getElementById('bookedPrice'); // Moved to confirm-booking.html
+        // REMOVED: const bookedMobileNumberSpan = document.getElementById('bookedMobileNumber'); // Moved to confirm-booking.html
+        const viewDeliveriesBtn = document.getElementById('viewDeliveriesBtn');
+        const proceedToPaymentBtn = document.getElementById('proceedToPaymentBtn'); // NEW: Added this back from snippet
+
+
+        // --- Global Variables ---
+        let CURRENT_SENDER_ID = null;
+        let CURRENT_SENDER_NAME = null;
+        let currentBookingType = ''; // Will be 'direct_delivery' or 'collection_point_pickup'
+        let pickupCoords = null; // Used for direct delivery pickup OR collection point pickup
+        let dropoffCoords = null; // Used for direct delivery dropoff OR collection point dropoff
+        let collectionPoints = []; // To store fetched collection points
+        let calculatedPrice = 0;
+        let calculatedDriverEarning = 0;
+        let currentBookingData = null; // To hold booking data before payment
+        let initialMap = null; // For the initial current location map
+        let currentLatLng = null; // Sender's current lat/lng
+
+        // --- Event Listeners ---
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            });
+        }
+        
+        if (menuToggle && mainNav) {
+            menuToggle.addEventListener('click', () => {
+                mainNav.classList.toggle('active');
+            });
+        }
+
+        directDeliveryBtn.addEventListener('click', () => chooseDeliveryType('direct_delivery'));
+        collectionPointBtn.addEventListener('click', () => chooseDeliveryType('collection_point_pickup'));
+        calculatePriceBtn.addEventListener('click', calculatePrice);
+        // Changed from bookingForm.addEventListener('submit', handleBookingSubmit);
+        bookingForm.addEventListener('submit', handleProceedToPayment); // New function for this page
+        proceedToPaymentBtn.addEventListener('click', handleProceedToPayment); // New: Listen for click on proceed button
+
+        viewDeliveriesBtn.addEventListener('click', () => {
+            window.location.href = 'sender-dashboard.html';
+        });
+
+        // Collapsible headers
+        document.querySelectorAll('.collapsible-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const contentId = this.dataset.target;
+                const content = document.getElementById(contentId);
+                
+                // Toggle active class on header itself
+                this.classList.toggle('active');
+                this.classList.toggle('closed');
+
+                // Toggle display of content
+                if (content.classList.contains('active')) {
+                    content.classList.remove('active');
+                    content.style.maxHeight = null; // Collapse
+                } else {
+                    content.classList.add('active');
+                    content.style.maxHeight = content.scrollHeight + "px"; // Expand
+                }
+            });
+        });
+
+        // --- Authentication State Listener ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    CURRENT_SENDER_ID = user.uid;
+                    CURRENT_SENDER_NAME = userDocSnap.data().name || "Sender";
+                    
+                    // Start by getting sender's location and displaying initial view
+                    getLocationAndInitMap();
+                    fetchCollectionPoints(); // Pre-fetch collection points
+                } else {
+                    alert("User data not found. Please complete your profile.");
+                    await signOut(auth);
+                    window.location.href = 'login.html';
+                }
+            } else {
+                window.location.href = 'login.html'; // Redirect to login if not authenticated
+            }
+        });
+
+
+        // --- Initial Map & Location ---
+        function getLocationAndInitMap() {
+            if (navigator.geolocation) {
+                locationStatus.textContent = "Attempting to get your location...";
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        currentLatLng = { lat: position.coords.latitude, lng: position.coords.longitude };
+                        initInitialMap(currentLatLng);
+                        locationStatus.textContent = "Your location is displayed. Adjust address if needed.";
+                    },
+                    (error) => {
+                        console.error("Geolocation error:", error);
+                        let errorMessage = "Could not get your location. Please allow location access in your browser settings.";
+                        if (error.code === error.PERMISSION_DENIED) {
+                            errorMessage = "Location access denied. Please enable it in browser settings.";
+                        } else if (error.code === error.POSITION_UNAVAILABLE) {
+                            errorMessage = "Location information is unavailable. Check your device settings.";
+                        } else if (error.code === error.TIMEOUT) {
+                            errorMessage = "Getting your location timed out.";
+                        }
+                        locationStatus.textContent = errorMessage + " Defaulting to Kampala.";
+                        // Default to a central location in Uganda if access is denied or fails
+                        currentLatLng = { lat: 0.347596, lng: 32.582520 }; // Kampala
+                        initInitialMap(currentLatLng);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                locationStatus.textContent = "Geolocation is not supported by your browser. Defaulting to Kampala.";
+                currentLatLng = { lat: 0.347596, lng: 32.582520 }; // Kampala
+                initInitialMap(currentLatLng);
+            }
+        }
+
+        function initInitialMap(latLng) {
+            if (initialMap) {
+                initialMap.remove(); // Remove existing map if any
+            }
+            initialMap = L.map('currentLocationMap').setView([latLng.lat, latLng.lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(initialMap);
+
+            L.marker([latLng.lat, latLng.lng]).addTo(initialMap)
+                .bindPopup("You are here (approx.)").openPopup();
+        }
+
+        // --- Delivery Type Selection Logic ---
+        function chooseDeliveryType(type) {
+            currentBookingType = type;
+            
+            // Hide initial view and success message
+            initialView.style.display = 'none';
+            bookingSuccessMessage.style.display = 'none';
+            generalMessageDiv.style.display = 'none'; // Clear any previous general messages
+
+            bookingForm.style.display = 'block'; // Show the entire booking form steps
+
+            // Deactivate all option buttons
+            directDeliveryBtn.classList.remove('active-option');
+            collectionPointBtn.classList.remove('active-option');
+
+            // Hide both panels first
+            directDeliveryPanel.style.display = 'none';
+            collectionPointPanel.style.display = 'none';
+
+            // Reset collapsible sections
+            document.querySelectorAll('.collapsible-content').forEach(content => {
+                content.classList.remove('active');
+                content.style.maxHeight = null;
+            });
+            document.querySelectorAll('.collapsible-header').forEach(header => {
+                header.classList.add('closed');
+                header.classList.remove('active');
+            });
+            // Open first section
+            detailsSectionHeader.classList.remove('closed');
+            detailsSectionHeader.classList.add('active');
+            detailsContent.classList.add('active');
+            detailsContent.style.maxHeight = detailsContent.scrollHeight + "px";
+
+
+            if (type === 'direct_delivery') {
+                directDeliveryBtn.classList.add('active-option');
+                directDeliveryPanel.style.display = 'block';
+                // Make pickupLocation default to current sender location if available
+                if (currentLatLng) {
+                    getAddressFromCoords(currentLatLng.lat, currentLatLng.lng).then(address => {
+                        pickupLocationInput.value = address || '';
+                        // Also store the coords in dataset for consistency with Autocomplete
+                        pickupLocationInput.dataset.lat = currentLatLng.lat;
+                        pickupLocationInput.dataset.lng = currentLatLng.lng;
+                    });
+                    // Store sender's current location as initial pickup coords
+                    pickupCoords = currentLatLng; // This will be overwritten if user uses autocomplete
+                }
+            } else { // collection_point_pickup
+                collectionPointBtn.classList.add('active-option');
+                collectionPointPanel.style.display = 'block';
+                // No need to set pickupLocation for collection points, sender selects from dropdown
+            }
+
+            // Hide price summary and payment details from previous attempts
+            priceSummaryDiv.style.display = 'none';
+            // Removed: confirmBookingBtn.style.display = 'block'; // Submit button is now handled by proceedToPaymentBtn
+            proceedToPaymentBtn.style.display = 'none'; // Hide this until price is calculated
+        }
+
+        async function fetchCollectionPoints() {
+            console.log("Attempting to fetch collection points...");
+            pickupPointLoadStatus.textContent = "Loading collection points...";
+            pickupPointSelect.disabled = true; // Disable until loaded
+            dropoffPointSelect.disabled = true;
+
+            try {
+                const collectionRef = collection(db, "collectionPoints");
+                console.log("Firestore collection reference created:", collectionRef);
+                const querySnapshot = await getDocs(collectionRef);
+                
+                console.log("Query snapshot received:", querySnapshot);
+                if (querySnapshot.empty) {
+                    console.warn("No documents found in 'collectionPoints' collection.");
+                    pickupPointLoadStatus.textContent = "No collection points found. Please contact admin.";
+                    collectionPoints = []; // Ensure it's empty
+                } else {
+                    collectionPoints = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    console.log("Collection points fetched:", collectionPoints);
+                    populateCollectionPointSelects();
+                    pickupPointLoadStatus.textContent = "Collection points loaded.";
+                }
+            } catch (error) {
+                console.error("Error fetching collection points:", error);
+                pickupPointLoadStatus.textContent = `Error loading points: ${error.message}. Please check your internet and Firestore rules.`;
+                generalMessageDiv.textContent = `Error: Could not load collection points. ${error.message}`;
+                generalMessageDiv.className = 'booking-message error';
+                generalMessageDiv.style.display = 'block';
+            } finally {
+                pickupPointSelect.disabled = false;
+                dropoffPointSelect.disabled = false;
+            }
+        }
+
+        function populateCollectionPointSelects() {
+            [pickupPointSelect, dropoffPointSelect].forEach(selectElement => {
+                selectElement.innerHTML = '<option value="">Select a center</option>'; // Clear existing options
+                collectionPoints.forEach(point => {
+                    const option = document.createElement('option');
+                    option.value = point.id;
+                    option.textContent = point.name;
+                    selectElement.appendChild(option);
+                });
+            });
+        }
+
+        async function getCoordinates(address) {
+            const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+            
+            try {
+                const response = await fetch(nominatimUrl, {
+                    headers: {
+                        'User-Agent': 'FikaConnectApp/1.0 (fikaconnect@example.com)' // Replace with your actual app name/email
+                    }
+                });
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+                } else {
+                    console.warn("No geocoding results for:", address);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Geocoding error for address:", address, error);
+            }
+            return null; // Return null if no coordinates found or error
+        }
+
+        // Simulating distance and time calculation based on coordinates
+        function calculateDistance(coord1, coord2) {
+            const R = 6371; // Radius of Earth in kilometers
+            const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
+            const dLon = (coord2.lng - coord1.lng) * Math.PI / 180;
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(coord1.lat * Math.PI / 180) * Math.cos(coord2.lat * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // Distance in km
+        }
+
+        function calculateEstimatedTime(distanceKm) {
+            // Assuming average speed of 30 km/h for urban delivery
+            const speedKmH = 30;
+            return (distanceKm / speedKmH) * 60; // Time in minutes
+        }
+
+        async function calculatePrice() {
+            showLoadingMessage("Calculating price...");
+            displayGeneralMessage(''); // Clear any previous general messages
+
+            let distance = 0;
+            let time = 0;
+            pickupCoords = null; // Reset for recalculation
+            dropoffCoords = null; // Reset for recalculation
+
+            let pickupLocationName = '';
+            let dropoffLocationName = '';
+            let selectedRecipientName = '';
+            let selectedRecipientContact = '';
+
+            // --- Validate common fields ---
+            const packageWeight = parseFloat(packageWeightInput.value);
+            const cargoType = cargoTypeSelect.value;
+            const packageDescription = packageDescriptionTextarea.value.trim(); // Trim description
+
+            if (!packageWeight || packageWeight <= 0 || !cargoType || !packageDescription) {
+                displayGeneralMessage('Please fill in all parcel details correctly.', 'error');
+                hideLoadingMessage();
+                return;
+            }
+
+            if (currentBookingType === 'direct_delivery') {
+                pickupLocationName = pickupLocationInput.value.trim();
+                dropoffLocationName = dropoffLocationInput.value.trim();
+                selectedRecipientName = recipientNameDirectInput.value.trim();
+                selectedRecipientContact = recipientContactDirectInput.value.trim();
+
+                if (!pickupLocationName || !dropoffLocationName || !selectedRecipientName || !selectedRecipientContact) {
+                    displayGeneralMessage('Please fill in all sender/recipient details for direct delivery.', 'error');
+                    hideLoadingMessage();
+                    return;
+                }
+                
+                // NEW: Use coordinates from Autocomplete's dataset if available
+                if (pickupLocationInput.dataset.lat && pickupLocationInput.dataset.lng &&
+                    dropoffLocationInput.dataset.lat && dropoffLocationInput.dataset.lng) {
+                    
+                    pickupCoords = { 
+                        lat: parseFloat(pickupLocationInput.dataset.lat), 
+                        lng: parseFloat(pickupLocationInput.dataset.lng) 
+                    };
+                    dropoffCoords = { 
+                        lat: parseFloat(dropoffLocationInput.dataset.lat), 
+                        lng: parseFloat(dropoffLocationInput.dataset.lng) 
+                    };
+                    console.log("Using Autocomplete coordinates for direct delivery.");
+
+                } else {
+                    // Fallback to Nominatim if autocomplete didn't provide coordinates (e.g., manual entry)
+                    console.log("Falling back to Nominatim for direct delivery coordinates.");
+                    // Add ", Uganda" for better geocoding context, if not already present
+                    const fullPickupAddress = pickupLocationName.includes('Uganda') ? pickupLocationName : `${pickupLocationName}, Uganda`;
+                    const fullDropoffAddress = dropoffLocationName.includes('Uganda') ? dropoffLocationName : `${dropoffLocationName}, Uganda`;
+
+                    pickupCoords = await getCoordinates(fullPickupAddress);
+                    dropoffCoords = await getCoordinates(fullDropoffAddress);
+                }
+
+                if (!pickupCoords) {
+                    displayGeneralMessage(`Could not find coordinates for Pickup Location: "${pickupLocationName}". Please refine the address (e.g., include street, district, or add "Uganda").`, 'error');
+                    hideLoadingMessage();
+                    return;
+                }
+                if (!dropoffCoords) {
+                    displayGeneralMessage(`Could not find coordinates for Drop-off Location: "${dropoffLocationName}". Please refine the address (e.g., include street, district, or add "Uganda").`, 'error');
+                    hideLoadingMessage();
+                    return;
+                }
+
+                distance = calculateDistance(pickupCoords, dropoffCoords);
+                time = calculateEstimatedTime(distance);
+
+            } else if (currentBookingType === 'collection_point_pickup') { // Collection Point Delivery
+                const pickupPointId = pickupPointSelect.value;
+                const dropoffPointId = dropoffPointSelect.value;
+                selectedRecipientName = recipientNameCollectionInput.value.trim();
+                selectedRecipientContact = recipientContactCollectionInput.value.trim();
+
+                if (!pickupPointId || !dropoffPointId || !selectedRecipientName || !selectedRecipientContact) {
+                    displayGeneralMessage('Please select both collection points and enter recipient details.', 'error');
+                    hideLoadingMessage();
+                    return;
+                }
+                if (pickupPointId === dropoffPointId) {
+                    displayGeneralMessage('Pickup and Drop-off FikaConnect Centers cannot be the same.', 'error');
+                    hideLoadingMessage();
+                    return;
+                }
+
+                const selectedPickupPoint = collectionPoints.find(p => p.id === pickupPointId);
+                const selectedDropoffPoint = collectionPoints.find(p => p.id === dropoffPointId);
+
+                if (!selectedPickupPoint || !selectedDropoffPoint) {
+                    displayGeneralMessage('Invalid collection point selected. Please try reloading the page.', 'error');
+                    hideLoadingMessage();
+                    return;
+                }
+
+                pickupLocationName = selectedPickupPoint.name; // Use center name as pickup/dropoff location
+                dropoffLocationName = selectedDropoffPoint.name;
+
+                // For collection points, we already have coordinates from Firestore
+                pickupCoords = selectedPickupPoint.coordinates;
+                dropoffCoords = selectedDropoffPoint.coordinates;
+
+                distance = calculateDistance(pickupCoords, dropoffCoords);
+                time = calculateEstimatedTime(distance);
+            } else {
+                displayGeneralMessage('Please select a delivery type first.', 'error');
+                hideLoadingMessage();
+                return;
+            }
+
+            // --- Pricing Logic (Example) ---
+            const basePrice = 5000; // UGX
+            const pricePerKm = 1000; // UGX
+            const pricePerKg = 500; // UGX
+            const fragileSurcharge = isFragileCheckbox.checked ? 0.2 : 0; // 20% surcharge for fragile
+
+            let calculatedBase = basePrice + (distance * pricePerKm) + (packageWeight * pricePerKg);
+            calculatedPrice = calculatedBase + (calculatedBase * fragileSurcharge);
+            calculatedPrice = Math.round(calculatedPrice / 100) * 100; // Round to nearest 100 for simplicity
+
+            // Driver Earning (example: 70% of total price)
+            calculatedDriverEarning = Math.round(calculatedPrice * 0.70 / 100) * 100;
+
+            estimatedDistanceSpan.textContent = distance.toFixed(2);
+            estimatedTimeSpan.textContent = Math.round(time);
+            totalPriceSpan.textContent = formatPrice(calculatedPrice);
+            driverEarningSpan.textContent = formatPrice(calculatedDriverEarning);
+            priceSummaryDiv.style.display = 'block';
+            
+            // Auto-open price summary section after price calculation
+            // Collapse previous sections
+            parcelContent.classList.remove('active');
+            parcelContent.style.maxHeight = null;
+            parcelSectionHeader.classList.remove('active');
+            parcelSectionHeader.classList.add('closed');
+            
+            priceContent.classList.add('active'); // Ensure price content is active
+            priceSectionHeader.classList.add('active');
+            priceSectionHeader.classList.remove('closed');
+            priceContent.style.maxHeight = priceContent.scrollHeight + "px"; // Expand it
+
+            // Show the "Proceed to Payment" button if price is valid
+            if (calculatedPrice > 0) {
+                proceedToPaymentBtn.style.display = 'block';
+            } else {
+                proceedToPaymentBtn.style.display = 'none';
+            }
+            
+            hideLoadingMessage();
+        }
+
+        // --- NEW: Handle Proceed to Payment Function ---
+        async function handleProceedToPayment(e) {
+            e.preventDefault(); // Prevent default form submission
+
+            if (!CURRENT_SENDER_ID) {
+                displayGeneralMessage("You must be logged in to book a delivery.", "error");
+                return;
+            }
+
+            if (!calculatedPrice || calculatedPrice <= 0) {
+                displayGeneralMessage("Please calculate a valid price first.", "error");
+                priceSectionHeader.click(); // Open price section
+                return;
+            }
+
+            // --- 1. Gather Booking Data for Transfer ---
+            let bookingDataToStore = {
+                customerId: CURRENT_SENDER_ID,
+                customerName: CURRENT_SENDER_NAME,
+                customerContact: auth.currentUser.phoneNumber || auth.currentUser.email,
+                fareAmount: calculatedPrice,
+                driverEarning: calculatedDriverEarning,
+                deliveryType: currentBookingType,
+                parcelDetails: {
+                    type: cargoTypeSelect.value,
+                    description: packageDescriptionTextarea.value,
+                    weightKg: parseFloat(packageWeightInput.value),
+                    isFragile: isFragileCheckbox.checked
+                },
+                estimatedDistance: parseFloat(estimatedDistanceSpan.textContent),
+                estimatedTime: parseInt(estimatedTimeSpan.textContent)
+            };
+
+            if (currentBookingType === 'direct_delivery') {
+                // Use the already determined pickupCoords and dropoffCoords from calculatePrice
+                // Ensure they are available before proceeding
+                if (!pickupCoords || !dropoffCoords) {
+                     displayGeneralMessage("Pickup or Drop-off coordinates are missing. Please ensure locations are valid and recalculate price.", "error");
+                     detailsSectionHeader.click();
+                     return;
+                }
+
+                bookingDataToStore.pickupLocation = {
+                    name: pickupLocationInput.value,
+                    lat: pickupCoords.lat,
+                    lng: pickupCoords.lng
+                };
+                bookingDataToStore.dropoffLocation = {
+                    name: dropoffLocationInput.value,
+                    lat: dropoffCoords.lat,
+                    lng: dropoffCoords.lng
+                };
+                bookingDataToStore.recipient = {
+                    name: recipientNameDirectInput.value,
+                    contact: recipientContactDirectInput.value
+                };
+
+                if (!bookingDataToStore.pickupLocation.name || !bookingDataToStore.dropoffLocation.name || !bookingDataToStore.recipient.name || !bookingDataToStore.recipient.contact) {
+                    displayGeneralMessage("Please fill all required fields for Direct Delivery.", "error");
+                    detailsSectionHeader.click();
+                    return;
+                }
+
+            } else if (currentBookingType === 'collection_point_pickup') {
+                const pickupPointData = collectionPoints.find(point => point.id === pickupPointSelect.value);
+                const dropoffPointData = collectionPoints.find(point => point.id === dropoffPointSelect.value);
+
+                if (!pickupPointData || !dropoffPointData) {
+                    displayGeneralMessage("Please select both Pickup and Destination FikaConnect Centers.", "error");
+                    detailsSectionHeader.click();
+                    return;
+                }
+
+                bookingDataToStore.pickupLocation = {
+                    id: pickupPointData.id,
+                    name: pickupPointData.name,
+                    locationName: pickupPointData.locationName, // Added for clarity
+                    lat: pickupPointData.coordinates.lat, // Use .lat and .lng from fetched data
+                    lng: pickupPointData.coordinates.lng
+                };
+                bookingDataToStore.dropoffLocation = {
+                    id: dropoffPointData.id,
+                    name: dropoffPointData.name,
+                    locationName: dropoffPointData.locationName, // Added for clarity
+                    lat: dropoffPointData.coordinates.lat,
+                    lng: dropoffPointData.coordinates.lng
+                };
+                bookingDataToStore.recipient = {
+                    name: recipientNameCollectionInput.value,
+                    contact: recipientContactCollectionInput.value
+                };
+
+                if (!bookingDataToStore.recipient.name || !bookingDataToStore.recipient.contact) {
+                    displayGeneralMessage("Please fill all required recipient details for Collection Point Delivery.", "error");
+                    detailsSectionHeader.click();
+                    return;
+                }
+
+            } else {
+                displayGeneralMessage("Please choose a delivery type first (Direct or Collection Point).", "error");
+                initialView.style.display = 'block';
+                bookingForm.style.display = 'none';
+                return;
+            }
+
+            if (!bookingDataToStore.parcelDetails.type || !bookingDataToStore.parcelDetails.description || isNaN(bookingDataToStore.parcelDetails.weightKg) || bookingDataToStore.parcelDetails.weightKg <= 0) {
+                displayGeneralMessage("Please fill all required Parcel Details.", "error");
+                parcelSectionHeader.click();
+                return;
+            }
+
+            // --- 2. Store Data in sessionStorage ---
+            try {
+                sessionStorage.setItem('fikaConnectBookingData', JSON.stringify(bookingDataToStore));
+                console.log("Booking data stored in sessionStorage:", bookingDataToStore);
+                // --- 3. Redirect to confirm-booking.html ---
+                window.location.href = 'confirm-booking.html';
+            } catch (error) {
+                console.error("Error storing booking data:", error);
+                displayGeneralMessage("Could not prepare booking. Please try again.", "error");
+            }
+        }
+
+        // Removed the old handleBookingSubmit function as it's replaced by handleProceedToPayment.
+
+        function formatPrice(price) {
+            if (typeof price !== 'number') return 'UGX 0';
+            return `UGX ${price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+        }
+
+        function displayGeneralMessage(message, type = '') {
+            generalMessageDiv.textContent = message;
+            generalMessageDiv.className = `booking-message ${type}`;
+            generalMessageDiv.style.display = message ? 'block' : 'none';
+            // For error messages, keep them visible until user takes action or recalculates/submits again
+        }
+
+        function showLoadingMessage(message) {
+            loadingMessageDiv.textContent = message;
+            loadingMessageDiv.style.display = 'block';
+            proceedToPaymentBtn.disabled = true; // Disable button during processing
+            calculatePriceBtn.disabled = true;
+        }
+
+        function hideLoadingMessage() {
+            loadingMessageDiv.style.display = 'none';
+            proceedToPaymentBtn.disabled = false;
+            calculatePriceBtn.disabled = false;
+        }
+
+        // --- Initial setup on page load ---
+        // Initially, only the initialView is visible. The bookingForm and success message are hidden.
+        initialView.style.display = 'block';
+        bookingForm.style.display = 'none';
+        bookingSuccessMessage.style.display = 'none';
+
+        async function getAddressFromCoords(lat, lng) {
+            if (!lat || !lng) return "N/A (Coordinates missing)";
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`, {
+                    headers: {
+                        'User-Agent': 'FikaConnectApp/1.0 (fikaconnect@example.com)'
+                    }
+                });
+                const data = await response.json();
+                return data.display_name || `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+            } catch (error) {
+                console.error("Error with reverse geocoding:", error);
+                return `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+            }
+        }
+        
+        // Global variable for Google Maps Autocomplete instances
+        let pickupAutocomplete;
+        let dropoffAutocomplete;
+
+        // This function will be called by the Google Maps API once it's loaded
+        window.initGoogleMapsApi = function() {
+            console.log("Google Maps API: initGoogleMapsApi callback fired. Initializing Autocomplete...");
+            // For Direct Delivery Panel
+            pickupAutocomplete = new google.maps.places.Autocomplete(pickupLocationInput, {
+                componentRestrictions: { country: 'ug' }, // Restrict to Uganda
+                fields: ['geometry', 'formatted_address', 'name'] // Request necessary fields
+            });
+            pickupAutocomplete.addListener('place_changed', () => {
+                const place = pickupAutocomplete.getPlace();
+                if (place.geometry) {
+                    // Store coordinates and full address in dataset
+                    pickupLocationInput.dataset.lat = place.geometry.location.lat();
+                    pickupLocationInput.dataset.lng = place.geometry.location.lng();
+                    pickupLocationInput.value = place.formatted_address; // Display the selected address
+                    console.log("Pickup Autocomplete: Place selected. Coords:", place.geometry.location.lat(), place.geometry.location.lng());
+                    // Trigger fare calculation here if you want immediate update
+                    calculatePrice();
+                } else {
+                    console.warn("Pickup Autocomplete: No geometry for place", place);
+                }
+            });
+
+            dropoffAutocomplete = new google.maps.places.Autocomplete(dropoffLocationInput, {
+                componentRestrictions: { country: 'ug' }, // Restrict to Uganda
+                fields: ['geometry', 'formatted_address', 'name']
+            });
+            dropoffAutocomplete.addListener('place_changed', () => {
+                const place = dropoffAutocomplete.getPlace();
+                if (place.geometry) {
+                    // Store coordinates and full address in dataset
+                    dropoffLocationInput.dataset.lat = place.geometry.location.lat();
+                    dropoffLocationInput.dataset.lng = place.geometry.location.lng();
+                    dropoffLocationInput.value = place.formatted_address; // Display the selected address
+                    console.log("Dropoff Autocomplete: Place selected. Coords:", place.geometry.location.lat(), place.geometry.location.lng());
+                    // Trigger fare calculation here if you want immediate update
+                    calculatePrice();
+                } else {
+                    console.warn("Dropoff Autocomplete: No geometry for place", place);
+                }
+            });
+            console.log("Google Maps Autocomplete initialized.");
+        };
+
+
+    </script>
+</body>
+</html>
