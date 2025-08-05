@@ -1,624 +1,924 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Active Deliveries | FikaConnect</title>
-    <script>
-        // Immediately invoked function to apply dark mode based on localStorage
-        (function() {
-            const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-            if (savedDarkMode) {
-                document.body.classList.add('dark-mode');
-            }
-        })();
-    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>All Bookings | FikaConnect</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodx-o3VjsX6LpB8L3t8m4g6Z7gB6p9R5d5K4F5a2G5f5p5G5b8m4e5k5g5e5d5g==" crossorigin=""/>
+
     <style>
         :root {
-            --primary-color: #28a745;
+            --bg-light: #f8f9fa;
+            --bg-dark: #121212;
+            --text-light: #fff;
+            --text-dark: #222;
+            --primary: #28a745;
             --primary-dark: #1e7e34;
-            --secondary-color: #6c757d;
-            --accent-color: #20c997;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
-            --info-color: #17a2b8;
-            --light-bg: #f8f9fa;
-            --dark-text: #212529;
-            --border-color: #dee2e6;
-            --white: #ffffff;
-            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            --transition: all 0.3s ease;
+            --secondary: #6c757d;
+            --card-light: #ffffff;
+            --card-dark: #1e1e1e;
+            --status-pending: #ffc107;
+            --status-picked-up: #17a2b8;
+            --status-in-transit: #007bff;
+            --status-delivered: #28a745;
+            --status-cancelled: #dc3545;
+            --sidebar-width: 260px;
             --header-height: 70px;
+            --transition: all 0.3s ease;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --border-radius: 12px;
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: var(--light-bg);
-            color: var(--dark-text);
-            line-height: 1.6;
-            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f2f5;
+            color: var(--text-dark);
+            transition: var(--transition);
             display: flex;
-            flex-direction: column;
+            min-height: 100vh;
         }
 
         body.dark-mode {
-            --light-bg: #121212;
-            --dark-text: #f8f9fa;
-            --border-color: #343a40;
-            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            background-color: var(--light-bg);
-            color: var(--dark-text);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .page-header {
-            background-color: var(--white);
-            box-shadow: var(--card-shadow);
-            padding: 15px 0;
-            position: sticky;
+        /* Top Bar & Header */
+        .top-bar {
+            position: fixed;
             top: 0;
-            z-index: 1000;
+            left: 0;
+            right: 0;
             height: var(--header-height);
+            background: var(--card-light);
+            box-shadow: var(--shadow);
             display: flex;
             align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            transition: var(--transition);
         }
 
-        body.dark-mode .page-header {
-            background-color: #1e1e1e;
+        .dark-mode .top-bar {
+            background: var(--card-dark);
+        }
+        
+        .menu-toggle {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary);
+            cursor: pointer;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            transition: var(--transition);
+            z-index: 1001;
+        }
+        
+        .menu-toggle:hover {
+            background: rgba(40, 167, 69, 0.1);
         }
 
-        .logo-container h1 a {
-            text-decoration: none;
-            color: var(--primary-color);
+        .logo {
+            display: flex;
+            align-items: center;
             font-weight: 700;
-            display: flex;
-            align-items: center;
+            font-size: 1.4rem;
+            color: var(--primary);
+            text-decoration: none;
         }
 
-        .logo-container h1 a::before {
-            content: "🚚";
+        .logo i {
             margin-right: 10px;
-            font-size: 1.5em;
+            font-size: 1.6rem;
         }
 
-        .main-nav {
+        .user-actions {
+            margin-left: auto;
             display: flex;
             align-items: center;
             gap: 15px;
         }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--dark-text);
-            padding: 10px 15px;
-            font-weight: 600;
-            transition: var(--transition);
-            border-radius: 30px;
-            font-size: 0.95em;
+        
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: var(--primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            transition: var(--transition);
         }
 
-        body.dark-mode .nav-links a {
-            color: var(--white);
+        .theme-toggle:hover {
+            background: rgba(40, 167, 69, 0.1);
         }
 
-        .nav-links a:hover {
-            color: var(--white);
-            background-color: var(--primary-color);
+        .language-selector {
+            position: relative;
+        }
+        
+        .language-selector select {
+            background: rgba(40, 167, 69, 0.1);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            transition: var(--transition);
+            min-width: 120px;
         }
 
+        .language-selector select:hover {
+            background: rgba(40, 167, 69, 0.2);
+        }
+        
+        .dark-mode .language-selector select {
+            background: rgba(40, 167, 69, 0.2);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            border-radius: 30px;
+            background: rgba(40, 167, 69, 0.1);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .user-profile:hover {
+            background: rgba(40, 167, 69, 0.2);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 70px;
+            height: 100vh;
+            background-color: var(--card-light);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+            transition: width 0.3s ease;
+            z-index: 990;
+            overflow-x: hidden;
+        }
+        
+        .dark-mode .sidebar {
+            background-color: var(--card-dark);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar:hover {
+            width: var(--sidebar-width);
+        }
+
+        .sidebar-header {
+            display: none;
+        }
+
+        .sidebar:hover .sidebar-header {
+            display: block;
+            padding: 20px 20px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+        }
+        
+        .sidebar:hover .sidebar-header h2 {
+            color: var(--primary);
+            margin-bottom: 5px;
+            font-size: 1.4rem;
+        }
+        
+        .sidebar:hover .sidebar-header p {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            margin: 0;
+        }
+        
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            padding-top: 80px; /* Space for the top bar */
+        }
+        
+        .sidebar:hover .sidebar-nav ul {
+            padding-top: 0;
+        }
+        
+        .sidebar-nav a {
+            text-decoration: none;
+            color: inherit;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px 0;
+            transition: var(--transition);
+            position: relative;
+            white-space: nowrap;
+        }
+        
+        .sidebar:hover .sidebar-nav a {
+            justify-content: flex-start;
+            padding: 12px 20px;
+        }
+        
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--primary);
+        }
+        
+        .sidebar-nav a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--primary);
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .sidebar-nav a i {
+            min-width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar-nav a span {
+            display: none;
+        }
+        
+        .sidebar:hover .sidebar-nav a span {
+            display: inline;
+        }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+
+        .sidebar:hover .sidebar-footer {
+            display: block;
+        }
+        
+        .dark-mode .sidebar-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
         .logout-btn {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 15px;
-            background-color: var(--danger-color);
-            color: var(--white);
-            border-radius: 30px;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #dc3545;
+            color: #fff;
+            border-radius: 8px;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500;
             transition: var(--transition);
             border: none;
             cursor: pointer;
-            font-size: 0.95em;
+            font-size: 1rem;
         }
-
+        
         .logout-btn:hover {
             background-color: #c82333;
             transform: translateY(-2px);
         }
 
-        main {
-            flex-grow: 1;
-            padding: 30px 0;
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 70px;
+            padding-top: calc(var(--header-height) + 20px);
+            padding-bottom: 20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            transition: margin-left 0.3s;
         }
 
-        .page-title {
-            text-align: center;
-            color: var(--primary-color);
+        .sidebar:hover + .main-content {
+            margin-left: var(--sidebar-width);
+        }
+
+        /* Page specific styles */
+        .page-header {
             margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
-        .deliveries-container {
-            background-color: var(--white);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 30px;
+        .page-header h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .page-header h2 i {
+            color: var(--primary);
         }
 
-        body.dark-mode .deliveries-container {
-            background-color: #1e1e1e;
-        }
-
-        .section-header {
+        /* Delivery Filter and Search */
+        .delivery-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        body.dark-mode .section-header {
-            border-bottom: 1px solid #495057;
-        }
-
-        .section-header h2 {
-            margin: 0;
-            color: var(--dark-text);
-        }
-
-        body.dark-mode .section-header h2 {
-            color: var(--white);
-        }
-
-        .controls-container {
-            display: flex;
             flex-wrap: wrap;
             gap: 15px;
             margin-bottom: 20px;
+            background: var(--card-light);
             padding: 15px;
-            background-color: rgba(40, 167, 69, 0.05);
-            border-radius: 10px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.03);
         }
 
-        body.dark-mode .controls-container {
-            background-color: rgba(40, 167, 69, 0.1);
+        .dark-mode .delivery-controls {
+            background: var(--card-dark);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .filter-group, .sort-group {
+        .delivery-controls .filter-group {
             display: flex;
-            flex-direction: column;
-            flex: 1;
-            min-width: 200px;
+            gap: 10px;
         }
 
-        .filter-group label, .sort-group label {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--dark-text);
-        }
-
-        body.dark-mode .filter-group label, body.dark-mode .sort-group label {
-            color: var(--white);
-        }
-
-        .filter-group select, .sort-group select {
-            padding: 10px;
+        .delivery-controls select {
+            padding: 8px 12px;
             border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background-color: var(--white);
-            color: var(--dark-text);
-            font-weight: 500;
-        }
-
-        body.dark-mode .filter-group select, body.dark-mode .sort-group select {
-            background-color: #343a40;
-            color: var(--white);
-            border: 1px solid #495057;
-        }
-
-        .search-box {
-            flex: 2;
-            min-width: 200px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background-color: var(--white);
-            color: var(--dark-text);
-        }
-
-        body.dark-mode .search-box input {
-            background-color: #343a40;
-            color: var(--white);
-            border: 1px solid #495057;
-        }
-
-        .search-box input::placeholder {
-            color: var(--secondary-color);
-        }
-
-        body.dark-mode .search-box input::placeholder {
-            color: #adb5bd;
-        }
-
-        .spinner {
-            text-align: center;
-            padding: 40px;
-        }
-
-        .spinner i {
-            font-size: 3rem;
-            color: var(--primary-color);
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .message {
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        .message.info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        body.dark-mode .message.info {
-            background-color: #0c5460;
-            color: #d1ecf1;
-            border: 1px solid #bee5eb;
-        }
-
-        body.dark-mode .message.error {
-            background-color: #721c24;
-            color: #f8d7da;
-            border: 1px solid #f5c6cb;
-        }
-
-        .delivery-card {
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: var(--bg-light);
+            color: var(--text-dark);
+            font-size: 1rem;
             transition: var(--transition);
         }
 
-        body.dark-mode .delivery-card {
-            border: 1px solid #495057;
+        .dark-mode .delivery-controls select {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--card-dark);
+            color: var(--text-light);
+        }
+        
+        .delivery-controls .search-group {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .delivery-controls .search-group input {
+            padding: 8px 12px;
+            padding-left: 35px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: var(--bg-light);
+            color: var(--text-dark);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .dark-mode .delivery-controls .search-group input {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--card-dark);
+            color: var(--text-light);
+        }
+
+        .delivery-controls .search-group i {
+            position: absolute;
+            left: 12px;
+            color: var(--secondary);
+        }
+
+        /* Deliveries Grid */
+        .deliveries-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .delivery-card {
+            background-color: var(--card-light);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
 
         .delivery-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
 
-        .delivery-header {
+        .dark-mode .delivery-card {
+            background-color: var(--card-dark);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .delivery-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
-
-        body.dark-mode .delivery-header {
-            border-bottom: 1px solid #495057;
+        
+        .dark-mode .delivery-card-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-
-        .delivery-id {
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-
-        .delivery-status {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+        
+        .delivery-card-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--primary);
             font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-badge i {
+            font-size: 0.7rem;
         }
 
         .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .status-assigned {
-            background-color: #cce5ff;
-            color: #004085;
-        }
-
-        .status-in-transit {
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .status-delivered {
-            background-color: #d4edda;
-            color: #155724;
+            background-color: var(--status-pending);
+            color: #212529;
         }
 
         .status-picked-up {
-            background-color: #cce5ff;
-            color: #004085;
+            background-color: var(--status-picked-up);
         }
 
-        body.dark-mode .status-pending {
-            background-color: #856404;
-            color: #fff3cd;
+        .status-in-transit {
+            background-color: var(--status-in-transit);
         }
 
-        body.dark-mode .status-assigned {
-            background-color: #004085;
-            color: #cce5ff;
+        .status-delivered {
+            background-color: var(--status-delivered);
         }
 
-        body.dark-mode .status-in-transit {
-            background-color: #0c5460;
-            color: #d1ecf1;
+        .status-cancelled {
+            background-color: var(--status-cancelled);
         }
-
-        body.dark-mode .status-delivered {
-            background-color: #155724;
-            color: #d4edda;
-        }
-
-        body.dark-mode .status-picked-up {
-            background-color: #004085;
-            color: #cce5ff;
-        }
-
+        
         .delivery-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .detail-item h4 {
-            margin: 0 0 5px 0;
             font-size: 0.9rem;
-            color: var(--secondary-color);
+        }
+        
+        .delivery-details-section {
+            padding-bottom: 10px;
+            border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
+            margin-bottom: 10px;
         }
 
-        body.dark-mode .detail-item h4 {
-            color: #adb5bd;
+        .dark-mode .delivery-details-section {
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+        }
+        
+        .delivery-details-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
         }
 
-        .detail-item p {
-            margin: 0;
+        .delivery-details-section strong {
+            display: block;
+            margin-bottom: 5px;
             font-weight: 600;
         }
 
-        .parcel-details {
-            background-color: rgba(0, 0, 0, 0.02);
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-
-        body.dark-mode .parcel-details {
-            background-color: rgba(255, 255, 255, 0.02);
-        }
-
-        .tracking-map {
-            height: 300px;
-            width: 100%;
-            border-radius: 8px;
-            margin-top: 20px;
-            border: 1px solid var(--border-color);
-            background: #f8f9fa;
-        }
-
-        body.dark-mode .tracking-map {
-            border: 1px solid #495057;
-            background: #2d2d2d;
-        }
-
-        .tracking-info {
-            margin-top: 15px;
-            padding: 15px;
-            background-color: rgba(40, 167, 69, 0.1);
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 500;
-        }
-
-        body.dark-mode .tracking-info {
-            background-color: rgba(40, 167, 69, 0.2);
-        }
-
-        .actions {
+        .delivery-details .detail-item {
+            margin-bottom: 8px;
             display: flex;
+            justify-content: space-between;
             gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
+            padding: 5px 0;
+        }
+        
+        .delivery-details .detail-item strong {
+            flex-basis: 40%;
+            font-weight: 600;
+            color: var(--text-dark);
         }
 
-        .btn {
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: none;
+        .dark-mode .delivery-details .detail-item strong {
+            color: var(--text-light);
+        }
+
+        .delivery-details .detail-item p {
+            flex-basis: 60%;
+            margin: 0;
+            text-align: right;
+            color: var(--secondary);
+        }
+        
+        .delivery-details p {
+            margin: 0;
+            color: var(--secondary);
+        }
+        
+        .delivery-map-container {
+            width: 100%;
+            height: 200px; /* Smaller map size for the cards */
+            border-radius: var(--border-radius);
+            margin-top: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .dark-mode .delivery-map-container {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card-actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .dark-mode .card-actions {
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .action-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
             font-weight: 600;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .action-btn.cancel {
+            background-color: var(--status-cancelled);
+            color: #fff;
+        }
+        
+        .action-btn.cancel:hover {
+            background-color: #c82333;
+        }
+        
+        .action-btn.track {
+            background-color: var(--status-in-transit);
+            color: #fff;
+        }
+        
+        .action-btn.track:hover {
+            background-color: #0069d9;
         }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
+        .action-btn.contact {
+            background-color: var(--primary);
+            color: #fff;
         }
 
-        .btn-primary:hover {
+        .action-btn.contact:hover {
             background-color: var(--primary-dark);
         }
 
-        .btn-secondary {
-            background-color: var(--secondary-color);
+        /* Pagination */
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .pagination-btn {
+            background-color: var(--primary);
             color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .pagination-btn:disabled {
+            background-color: var(--secondary);
+            cursor: not-allowed;
         }
 
-        .btn-secondary:hover {
-            background-color: #5a6268;
+        /* Messages */
+        #loadingDeliveries, #noDeliveriesMessage, #errorMessage {
+            text-align: center;
+            margin: 40px 0;
+            font-size: 1.1em;
+            color: var(--secondary);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            background: rgba(0, 0, 0, 0.02);
         }
 
+        .dark-mode #loadingDeliveries, 
+        .dark-mode #noDeliveriesMessage, 
+        .dark-mode #errorMessage {
+            background: rgba(255, 255, 255, 0.02);
+            color: #bbb;
+        }
+
+        #errorMessage {
+            color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+            font-weight: 500;
+        }
+
+        .dark-mode #errorMessage {
+            color: #ff6b6b;
+        }
+
+        /* Footer */
         .page-footer {
-            background-color: var(--dark-text);
-            color: #fff;
             text-align: center;
             padding: 25px 0;
-            font-size: 0.95em;
+            font-size: 0.95rem;
+            color: var(--secondary);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
             margin-top: auto;
         }
+        
+        .dark-mode .page-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: #aaa;
+        }
 
+        /* Overlay for mobile */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 800;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        /* Responsive Improvements */
+        @media (max-width: 991px) {
+            .sidebar {
+                width: var(--sidebar-width);
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                top: 0;
+                height: 100%;
+                box-shadow: var(--shadow);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .sidebar:hover {
+                width: var(--sidebar-width); /* Override hover for mobile */
+            }
+
+            .sidebar-nav ul {
+                padding-top: 80px; /* Adjust padding for mobile sidebar */
+            }
+
+            .sidebar-header {
+                display: block;
+                padding: 20px;
+            }
+            
+            .sidebar-nav a {
+                justify-content: flex-start;
+                padding: 12px 20px;
+            }
+
+            .sidebar-nav a span {
+                display: inline;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding-left: 15px;
+                padding-right: 15px;
+                padding-top: calc(var(--header-height) + 15px);
+            }
+            
+            .deliveries-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+        
+        @media (min-width: 992px) {
+            .menu-toggle {
+                display: none;
+            }
+            
+            .overlay {
+                display: none !important;
+            }
+            
+            .sidebar-nav ul {
+                padding-top: 80px; /* Space for top bar */
+            }
+
+            .sidebar:hover .sidebar-nav ul {
+                padding-top: 0;
+            }
+            
+            .sidebar-footer {
+                display: block;
+            }
+            
+            .sidebar:not(:hover) .sidebar-footer {
+                display: none;
+            }
+        }
+        
         @media (max-width: 768px) {
-            .section-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-
-            .controls-container {
-                flex-direction: column;
-            }
-
-            .delivery-details {
+            .deliveries-grid {
                 grid-template-columns: 1fr;
             }
-
-            .actions {
-                flex-direction: column;
+            
+            .page-header h2 {
+                font-size: 1.5rem;
             }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
+            
+            .user-name {
+                display: none;
+            }
+            
+            .user-profile {
+                padding: 8px 12px;
             }
         }
     </style>
 </head>
 <body>
-    <header class="page-header">
-        <div class="container">
-            <div class="logo-container">
-                <h1><a href="landing.html">FikaConnect</a></h1>
-            </div>
-            <nav class="main-nav">
-                <div class="nav-links">
-                    <a href="sender-dasboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                    <a href="book-new-delivery.html"><i class="fas fa-plus-circle"></i> Book New</a>
-                    <a href="sender-active-deliveries.html" class="active"><i class="fas fa-truck-moving"></i> Active Deliveries</a>
-                </div>
-                <a href="#" id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </nav>
-        </div>
-    </header>
+    <div class="overlay" id="overlay"></div>
 
-    <main class="container">
-        <h1 class="page-title">Track Your Active Deliveries</h1>
+    <div class="top-bar">
+        <button class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="index.html" class="logo">
+            <i class="fas fa-shipping-fast"></i> FikaConnect
+        </a>
+        <div class="user-actions">
+            <div class="language-selector">
+                <select id="languageSelector">
+                    <option value="en">English</option>
+                    <option value="lg">Luganda</option>
+                    <option value="sw">Kiswahili</option>
+                    <option value="fr">French</option>
+                </select>
+            </div>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+            <div class="user-profile">
+                <div class="user-avatar" id="userAvatar">S</div>
+                <span class="user-name" id="userNameDisplay">Sender</span>
+            </div>
+        </div>
+    </div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>FikaConnect</h2>
+            <p data-translate="sidebarDashboardTitle">Sender Dashboard</p>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="index.html"><i class="fas fa-tachometer-alt"></i> <span data-translate="navDashboard">Dashboard</span></a></li>
+                <li><a href="book-new-delivery.html"><i class="fas fa-plus-circle"></i> <span data-translate="navBookNew">Book New</span></a></li>
+                <li><a href="sender profile.html"><i class="fas fa-user-circle"></i> <span data-translate="navProfile">My Profile</span></a></li>
+                <li><a href="sender-active-deliveries.html" class="active"><i class="fas fa-history"></i> <span data-translate="navBookings">My Bookings</span></a></li>
+                <li><a href="sender-settings.html"><i class="fas fa-cog"></i> <span data-translate="navSettings">Settings</span></a></li>
+                <li><a href="contact-us.html"><i class="fas fa-headset"></i> <span data-translate="navContact">Contact Us</span></a></li>
+                <li><a href="about.html"><i class="fas fa-info-circle"></i> <span data-translate="navAbout">About Us</span></a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="#" class="logout-btn" id="logoutBtnSidebar"><i class="fas fa-sign-out-alt"></i> <span data-translate="logout">Logout</span></a>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2 data-translate="bookingsPageTitle"><i class="fas fa-history"></i> All My Bookings</h2>
+        </div>
+
+        <div class="delivery-controls">
+            <div class="filter-group">
+                <select id="statusFilter">
+                    <option value="all" data-translate="filterAll">All Statuses</option>
+                    <option value="pending" data-translate="statusPending">Pending</option>
+                    <option value="picked up" data-translate="statusPickedUp">Picked Up</option>
+                    <option value="in transit" data-translate="statusInTransit">In Transit</option>
+                    <option value="delivered" data-translate="statusDelivered">Delivered</option>
+                    <option value="cancelled" data-translate="statusCancelled">Cancelled</option>
+                </select>
+                </div>
+            <div class="search-group">
+                <i class="fas fa-search"></i>
+                <input type="text" id="deliverySearch" placeholder="Search by booking ID, route...">
+            </div>
+        </div>
         
-        <div class="deliveries-container">
-            <div class="section-header">
-                <h2><i class="fas fa-truck-moving"></i> Current Deliveries</h2>
+        <div id="loadingDeliveries" style="display: block;" data-translate="loadingDeliveries">Loading your bookings...</div>
+        <div id="noDeliveriesMessage" style="display: none;" data-translate="noDeliveriesMessage">You have no bookings yet. Book one!</div>
+        <div id="errorMessage" style="display: none;"></div>
+        
+        <div class="deliveries-grid" id="deliveriesList">
             </div>
-            
-            <div class="controls-container">
-                <div class="search-box">
-                    <label for="searchInput"><i class="fas fa-search"></i> Search Deliveries</label>
-                    <input type="text" id="searchInput" placeholder="Search by pickup/dropoff location, recipient, or booking ID...">
-                </div>
-                
-                <div class="filter-group">
-                    <label for="statusFilter"><i class="fas fa-filter"></i> Filter by Status</label>
-                    <select id="statusFilter">
-                        <option value="all">All Statuses</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Assigned">Assigned</option>
-                        <option value="Picked Up">Picked Up</option>
-                        <option value="In Transit">In Transit</option>
-                    </select>
-                </div>
-                
-                <div class="sort-group">
-                    <label for="sortOrder"><i class="fas fa-sort"></i> Sort By</label>
-                    <select id="sortOrder">
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="fare-high">Fare: High to Low</option>
-                        <option value="fare-low">Fare: Low to High</option>
-                        <option value="pickup-a-z">Pickup: A to Z</option>
-                        <option value="dropoff-a-z">Dropoff: A to Z</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div id="loadingSpinner" class="spinner">
-                <i class="fas fa-spinner"></i>
-                <p>Loading your deliveries...</p>
-            </div>
-            
-            <div id="errorMessage" class="message error" style="display: none;">
-                <p><i class="fas fa-exclamation-circle"></i> <span id="errorText">Error loading deliveries. Please try again.</span></p>
-            </div>
-            
-            <div id="noDeliveriesMessage" class="message info" style="display: none;">
-                <p><i class="fas fa-info-circle"></i> You don't have any active deliveries at the moment.</p>
-            </div>
-            
-            <div id="deliveriesList"></div>
+        
+        <div class="pagination-controls" id="paginationControls" style="display: none;">
+            <button class="pagination-btn" id="prevPageBtn" disabled>&laquo; Previous</button>
+            <span id="currentPageInfo">Page 1</span>
+            <button class="pagination-btn" id="nextPageBtn" disabled>Next &raquo;</button>
         </div>
-    </main>
 
-    <footer class="page-footer">
-        <div class="container">
+        <footer class="page-footer">
             <p>&copy; 2025 FikaConnect — Smart Logistics for East Africa</p>
-        </div>
-    </footer>
+        </footer>
+    </div>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-Rksm79c8p6a+Qo3BqQ6L2u4sK6V4g8w8n7f6v5u6F2j4a3t8w9d115e5e6t8e8i3j8w5u2f5b5f6v2e7u2p2h2a5g==" crossorigin=""></script>
+
     <script type="module">
         'use strict';
 
-        // Firebase imports - using modular SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, orderBy, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, orderBy, limit, doc, getDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // Wait for DOMContentLoaded for safety
         document.addEventListener('DOMContentLoaded', () => {
             const firebaseConfig = {
                 apiKey: "AIzaSyDq3uO76nnqqPgPaFfXpOTEnFSXRqXneWU",
@@ -632,38 +932,218 @@
             const auth = getAuth(app);
             const db = getFirestore(app);
 
-            // --- DOM Elements ---
-            const logoutBtn = document.getElementById('logoutBtn');
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+
+            const languageSelector = document.getElementById('languageSelector');
+            const logoutBtnSidebar = document.getElementById('logoutBtnSidebar');
+            const userAvatar = document.getElementById('userAvatar');
+            const userNameDisplayTop = document.getElementById('userNameDisplay');
+
             const deliveriesList = document.getElementById('deliveriesList');
-            const loadingSpinner = document.getElementById('loadingSpinner');
+            const loadingDeliveries = document.getElementById('loadingDeliveries');
             const noDeliveriesMessage = document.getElementById('noDeliveriesMessage');
             const errorMessageDiv = document.getElementById('errorMessage');
-            const errorText = document.getElementById('errorText');
-            const searchInput = document.getElementById('searchInput');
             const statusFilter = document.getElementById('statusFilter');
-            const sortOrder = document.getElementById('sortOrder');
+            const deliverySearch = document.getElementById('deliverySearch');
 
-            // --- Global Variables ---
             let CURRENT_SENDER_ID = null;
-            let allActiveBookings = []; // Store all active bookings for filtering/sorting
-            const activeTrackingMaps = {}; // To store Leaflet map instances and their Firestore listeners
+            const activeTrackingMaps = {};
+            let liveDeliveries = {};
 
-            // --- Event Listeners for Filters ---
-            searchInput.addEventListener('input', filterAndDisplayDeliveries);
-            statusFilter.addEventListener('change', filterAndDisplayDeliveries);
-            sortOrder.addEventListener('change', filterAndDisplayDeliveries);
+            // Translations object
+            const translations = {
+                en: {
+                    sidebarDashboardTitle: "Sender Dashboard",
+                    navDashboard: "Dashboard",
+                    navBookNew: "Book New",
+                    navProfile: "My Profile",
+                    navBookings: "My Bookings",
+                    navSettings: "Settings",
+                    navContact: "Contact Us",
+                    navAbout: "About Us",
+                    logout: "Logout",
+                    bookingsPageTitle: "All My Bookings",
+                    filterAll: "All Statuses",
+                    loadingDeliveries: "Loading your bookings...",
+                    noDeliveriesMessage: "You have no bookings yet. Book one!",
+                    fare: "Fare",
+                    pickup: "Pickup",
+                    dropoff: "Dropoff",
+                    driver: "Driver",
+                    vehiclePlate: "Vehicle Plate",
+                    statusPending: "Pending",
+                    statusPickedUp: "Picked Up",
+                    statusInTransit: "In Transit",
+                    statusDelivered: "Delivered",
+                    statusCancelled: "Cancelled",
+                    cancelBtn: "Cancel Booking",
+                    trackBtn: "Track",
+                    contactBtn: "Contact Driver",
+                    goodsTransported: "Goods Transported",
+                    cancelConfirm: "Are you sure you want to cancel and delete this booking? This action cannot be undone."
+                },
+                lg: {
+                    sidebarDashboardTitle: "Ekisenge ky'Omutumi",
+                    navDashboard: "Ddesiboodi",
+                    navBookNew: "Tandika Omutumi",
+                    navProfile: "Purofayiro Yange",
+                    navBookings: "Ebitongole Byange",
+                    navSettings: "Enteekateeka",
+                    navContact: "Tukubira",
+                    navAbout: "Kwatukwata",
+                    logout: "Ggula",
+                    bookingsPageTitle: "Ebitongole Byange Byonna",
+                    filterAll: "Ebintu Byonna",
+                    loadingDeliveries: "Nnongoza ebitongole byo...",
+                    noDeliveriesMessage: "Wadde tewali butongole bwo. Tandika okukola butongole!",
+                    fare: "Ettemu",
+                    pickup: "W'otwalidde",
+                    dropoff: "W'ogenderedde",
+                    driver: "Omuvuzi",
+                    vehiclePlate: "Namba y'Ekidduka",
+                    statusPending: "Kulinda",
+                    statusPickedUp: "Okitutte",
+                    statusInTransit: "Mu Lugendo",
+                    statusDelivered: "Kiweereddwa",
+                    statusCancelled: "Kikomezebwa",
+                    cancelBtn: "Komya Ekitongole",
+                    trackBtn: "Ggatta",
+                    contactBtn: "Kubira Omuvuzi",
+                    goodsTransported: "Ebintu Ebitwalibwa",
+                    cancelConfirm: "Oli mukakasa okukomya ekitongole kino? Ekikolwa kino tekisobola kuddizibwa."
+                },
+                sw: {
+                    sidebarDashboardTitle: "Dashibodi ya Mtumaji",
+                    navDashboard: "Dashibodi",
+                    navBookNew: "Weka Oda Mpya",
+                    navProfile: "Wasifu Wangu",
+                    navBookings: "Oda Zangu",
+                    navSettings: "Mipangilio",
+                    navContact: "Wasiliana Nasi",
+                    navAbout: "Kuhusu Sisi",
+                    logout: "Ondoka",
+                    bookingsPageTitle: "Oda Zangu Zote",
+                    filterAll: "Hali Zote",
+                    loadingDeliveries: "Inapakia oda zako...",
+                    noDeliveriesMessage: "Huna oda zozote bado. Weka moja!",
+                    fare: "Nauli",
+                    pickup: "Kutoka",
+                    dropoff: "Kwenda",
+                    driver: "Dereva",
+                    vehiclePlate: "Nambari ya Gari",
+                    statusPending: "Inasubiri",
+                    statusPickedUp: "Imechukuliwa",
+                    statusInTransit: "Njiani",
+                    statusDelivered: "Imefika",
+                    statusCancelled: "Imefutwa",
+                    cancelBtn: "Ghairi Oda",
+                    trackBtn: "Fuatilia",
+                    contactBtn: "Wasiliana na Dereva",
+                    goodsTransported: "Bidhaa Zilizosafirishwa",
+                    cancelConfirm: "Una uhakika unataka kughairi na kufuta oda hii? Kitendo hiki hakiwezi kutenduliwa."
+                },
+                fr: {
+                    sidebarDashboardTitle: "Tableau de Bord de l'Expéditeur",
+                    navDashboard: "Tableau de Bord",
+                    navBookNew: "Nouvelle Réservation",
+                    navProfile: "Mon Profil",
+                    navBookings: "Mes Réservations",
+                    navSettings: "Paramètres",
+                    navContact: "Contactez-nous",
+                    navAbout: "À Propos de Nous",
+                    logout: "Déconnexion",
+                    bookingsPageTitle: "Toutes Mes Réservations",
+                    filterAll: "Tous les statuts",
+                    loadingDeliveries: "Chargement de vos réservations...",
+                    noDeliveriesMessage: "Vous n'avez pas encore de réservations. Faites une réservation !",
+                    fare: "Tarif",
+                    pickup: "Lieu de ramassage",
+                    dropoff: "Lieu de dépôt",
+                    driver: "Chauffeur",
+                    vehiclePlate: "Plaque d'immatriculation",
+                    statusPending: "En Attente",
+                    statusPickedUp: "Ramassé",
+                    statusInTransit: "En Transit",
+                    statusDelivered: "Livré",
+                    statusCancelled: "Annulé",
+                    cancelBtn: "Annuler la réservation",
+                    trackBtn: "Suivre",
+                    contactBtn: "Contacter le chauffeur",
+                    goodsTransported: "Marchandises transportées",
+                    cancelConfirm: "Êtes-vous sûr de vouloir annuler et supprimer cette réservation ? Cette action est irréversible."
+                }
+            };
+            
+            // Function to set the language and store it
+            function setLanguage(lang) {
+                document.querySelectorAll('[data-translate]').forEach(element => {
+                    const key = element.getAttribute('data-translate');
+                    if (translations[lang] && translations[lang][key]) {
+                        element.innerHTML = translations[lang][key];
+                    }
+                });
+                
+                // Update placeholder for search input
+                const searchInput = document.getElementById('deliverySearch');
+                if (searchInput) {
+                    searchInput.placeholder = translations[lang].searchInputPlaceholder || "Search by booking ID, route...";
+                }
 
-            // --- Logout Event Listener ---
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async (e) => {
+                localStorage.setItem('selectedLanguage', lang);
+            }
+            
+            // Function to apply the stored language on page load
+            function applyStoredLanguage() {
+                const storedLang = localStorage.getItem('selectedLanguage') || 'en';
+                languageSelector.value = storedLang;
+                setLanguage(storedLang);
+            }
+
+            // Language selector event listener
+            if (languageSelector) {
+                languageSelector.addEventListener('change', (event) => {
+                    setLanguage(event.target.value);
+                    renderDeliveries(); // Re-render to apply status translations
+                });
+            }
+
+            // Mobile menu toggle logic
+            if (menuToggle && sidebar && overlay) {
+                menuToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                    overlay.classList.toggle('active');
+                });
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // Theme toggle logic
+            if (themeToggle && body) {
+                themeToggle.addEventListener('click', () => {
+                    body.classList.toggle('dark-mode');
+                    const icon = themeToggle.querySelector('i');
+                    icon.classList.toggle('fa-moon');
+                    icon.classList.toggle('fa-sun');
+                });
+            }
+
+            // Logout Event Listener
+            if (logoutBtnSidebar) {
+                logoutBtnSidebar.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    cleanupTrackingMaps(); // Clean up maps before logging out
+                    cleanupTrackingMaps();
                     await signOut(auth);
                     window.location.href = 'login.html';
                 });
             }
 
-            // --- Authentication State Listener ---
+            // Authentication State Listener
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     CURRENT_SENDER_ID = user.uid;
@@ -671,247 +1151,214 @@
                         const userDocRef = doc(db, "users", user.uid);
                         const userDocSnap = await getDoc(userDocRef);
                         if (userDocSnap.exists()) {
-                            // We don't need to display user name on this page
+                            const userData = userDocSnap.data();
+                            const userName = userData.name || "Sender";
+                            if (userNameDisplayTop) userNameDisplayTop.textContent = userName;
+                            userAvatar.textContent = userName.charAt(0).toUpperCase();
+                        } else {
+                            if (userNameDisplayTop) userNameDisplayTop.textContent = "Sender";
+                            userAvatar.textContent = "S";
                         }
                     } catch (error) {
-                        console.error("Error fetching user data:", error);
+                        console.error("Error fetching user name:", error);
+                        if (userNameDisplayTop) userNameDisplayTop.textContent = "Sender";
+                        userAvatar.textContent = "S";
                     }
-                    loadActiveDeliveries(); // Fetch deliveries once user is authenticated
+                    setupLiveDeliveriesListener();
                 } else {
-                    cleanupTrackingMaps(); // Clean up maps if user signs out
-                    window.location.href = 'login.html'; // Redirect to login page
+                    cleanupTrackingMaps();
+                    window.location.href = 'login.html';
                 }
             });
 
-            // --- Load Active Deliveries ---
-            async function loadActiveDeliveries() {
+            // Filter and Search event listeners
+            statusFilter.addEventListener('change', renderDeliveries);
+            deliverySearch.addEventListener('input', renderDeliveries);
+
+            // Fetch and Display Deliveries (live listener)
+            async function setupLiveDeliveriesListener() {
+                loadingDeliveries.style.display = 'block';
+                deliveriesList.innerHTML = '';
+                noDeliveriesMessage.style.display = 'none';
+                errorMessageDiv.style.display = 'none';
+                errorMessageDiv.textContent = '';
+
                 if (!CURRENT_SENDER_ID) {
-                    showError("Error: Sender ID not available. Please log in.");
+                    errorMessageDiv.textContent = "Error: Sender ID not available. Please log in.";
+                    errorMessageDiv.style.display = 'block';
+                    loadingDeliveries.style.display = 'none';
+                    applyStoredLanguage();
                     return;
                 }
 
                 try {
-                    // Show loading spinner
-                    loadingSpinner.style.display = 'block';
-                    errorMessageDiv.style.display = 'none';
-                    noDeliveriesMessage.style.display = 'none';
-                    deliveriesList.innerHTML = '';
-
-                    // Query for all user's bookings, then filter client-side
+                    const bookingsRef = collection(db, "bookings");
                     const q = query(
-                        collection(db, "bookings"),
+                        bookingsRef,
                         where("customerId", "==", CURRENT_SENDER_ID),
                         orderBy("bookingDate", "desc")
                     );
 
-                    // Real-time listener for bookings
-                    const unsubscribe = onSnapshot(q, (snapshot) => {
-                        // Clean up existing maps
-                        cleanupTrackingMaps();
-                        
-                        // Filter bookings client-side to show only active ones
-                        allActiveBookings = [];
-                        snapshot.forEach((doc) => {
-                            const booking = doc.data();
-                            const status = booking.status || '';
-                            
-                            // Only include active bookings (not delivered or cancelled)
-                            if (status !== 'Delivered' && status !== 'Cancelled') {
-                                allActiveBookings.push({ id: doc.id, data: booking });
-                            }
+                    onSnapshot(q, (querySnapshot) => {
+                        liveDeliveries = {};
+                        querySnapshot.forEach(docSnapshot => {
+                            liveDeliveries[docSnapshot.id] = docSnapshot.data();
                         });
-                        
-                        // Display filtered/sorted deliveries
-                        filterAndDisplayDeliveries();
+                        renderDeliveries();
                     }, (error) => {
-                        console.error("Error loading deliveries:", error);
-                        showError(`Failed to load deliveries: ${error.message}`);
+                        console.error("Failed to set up delivery listener:", error);
+                        errorMessageDiv.textContent = `Failed to set up delivery listener: ${error.message}`;
+                        errorMessageDiv.style.display = 'block';
+                        loadingDeliveries.style.display = 'none';
+                        applyStoredLanguage();
                     });
 
                 } catch (error) {
-                    console.error("Error setting up delivery listener:", error);
-                    showError(`Error: ${error.message}`);
+                    console.error("Failed to set up delivery listener:", error);
+                    errorMessageDiv.textContent = `Failed to set up delivery listener: ${error.message}`;
+                    errorMessageDiv.style.display = 'block';
+                    loadingDeliveries.style.display = 'none';
+                    applyStoredLanguage();
                 }
             }
+            
+            // Function to handle booking cancellation
+            async function cancelBooking(bookingId) {
+                const currentLang = localStorage.getItem('selectedLanguage') || 'en';
+                const confirmMessage = translations[currentLang]?.cancelConfirm || "Are you sure you want to cancel and delete this booking? This action cannot be undone.";
 
-            // --- Filter and Display Deliveries ---
-            function filterAndDisplayDeliveries() {
-                // Get filter values
-                const searchTerm = searchInput.value.toLowerCase();
-                const statusFilterValue = statusFilter.value;
-                const sortValue = sortOrder.value;
-                
-                // Filter bookings
-                let filteredBookings = allActiveBookings.filter(({ id, data }) => {
-                    // Status filter
-                    if (statusFilterValue !== 'all' && data.status !== statusFilterValue) {
-                        return false;
+                if (confirm(confirmMessage)) {
+                    try {
+                        await deleteDoc(doc(db, "bookings", bookingId));
+                        console.log("Booking successfully deleted!");
+                        // UI will automatically update due to the live listener
+                    } catch (error) {
+                        console.error("Error removing booking:", error);
+                        alert("Error cancelling booking: " + error.message);
                     }
+                }
+            }
+            
+            // Render deliveries based on current filters and search
+            async function renderDeliveries() {
+                const filterValue = statusFilter.value;
+                const searchValue = deliverySearch.value.toLowerCase().trim();
+                const filteredDeliveries = Object.entries(liveDeliveries).filter(([id, booking]) => {
+                    const statusMatch = filterValue === 'all' || (booking.status && booking.status.toLowerCase() === filterValue);
+                    const searchMatch = 
+                        !searchValue || 
+                        id.toLowerCase().includes(searchValue) || 
+                        (booking.pickupLocation?.name && booking.pickupLocation.name.toLowerCase().includes(searchValue)) ||
+                        (booking.dropoffLocation?.name && booking.dropoffLocation.name.toLowerCase().includes(searchValue)) ||
+                        (booking.goodsDescription && booking.goodsDescription.toLowerCase().includes(searchValue));
                     
-                    // Search filter
-                    if (searchTerm) {
-                        const pickupName = data.pickupLocation?.name?.toLowerCase() || '';
-                        const dropoffName = data.dropoffLocation?.name?.toLowerCase() || '';
-                        const recipientName = data.recipient?.name?.toLowerCase() || '';
-                        const shortId = id.substring(0, 8).toLowerCase();
-                        
-                        if (!pickupName.includes(searchTerm) && 
-                            !dropoffName.includes(searchTerm) && 
-                            !recipientName.includes(searchTerm) && 
-                            !shortId.includes(searchTerm)) {
-                            return false;
+                    return statusMatch && searchMatch;
+                });
+
+                deliveriesList.innerHTML = '';
+                cleanupTrackingMaps();
+                loadingDeliveries.style.display = 'none';
+
+                if (filteredDeliveries.length === 0) {
+                    noDeliveriesMessage.style.display = 'block';
+                    return;
+                } else {
+                    noDeliveriesMessage.style.display = 'none';
+                }
+
+                const promises = filteredDeliveries.map(async ([bookingId, booking]) => {
+                    let driverInfo = { name: 'Assigned', vehiclePlate: 'N/A', phoneNumber: null };
+                    if (booking.assignedDriver) {
+                        const driverDocRef = doc(db, "users", booking.assignedDriver);
+                        const driverDocSnap = await getDoc(driverDocRef);
+                        if (driverDocSnap.exists()) {
+                            const driverData = driverDocSnap.data();
+                            driverInfo.name = driverData.name || 'Assigned';
+                            driverInfo.vehiclePlate = driverData.vehicle?.plateNumber || 'N/A';
+                            driverInfo.phoneNumber = driverData.phoneNumber || null;
                         }
                     }
+                    const card = createDeliveryCard(booking, bookingId, driverInfo);
+                    deliveriesList.appendChild(card);
                     
-                    return true;
-                });
-                
-                // Sort bookings
-                filteredBookings.sort((a, b) => {
-                    switch (sortValue) {
-                        case 'oldest':
-                            return a.data.bookingDate?.toDate() - b.data.bookingDate?.toDate();
-                        case 'fare-high':
-                            return (b.data.fareAmount || 0) - (a.data.fareAmount || 0);
-                        case 'fare-low':
-                            return (a.data.fareAmount || 0) - (b.data.fareAmount || 0);
-                        case 'pickup-a-z':
-                            return (a.data.pickupLocation?.name || '').localeCompare(b.data.pickupLocation?.name || '');
-                        case 'dropoff-a-z':
-                            return (a.data.dropoffLocation?.name || '').localeCompare(b.data.dropoffLocation?.name || '');
-                        case 'newest':
-                        default:
-                            return b.data.bookingDate?.toDate() - a.data.bookingDate?.toDate();
-                    }
-                });
-                
-                // Display results
-                displayDeliveries(filteredBookings);
-            }
-
-            // --- Display Deliveries ---
-            function displayDeliveries(bookings) {
-                if (bookings.length === 0) {
-                    noDeliveriesMessage.style.display = 'block';
-                    loadingSpinner.style.display = 'none';
-                    deliveriesList.innerHTML = '';
-                    return;
-                }
-
-                // Clear and populate deliveries
-                deliveriesList.innerHTML = '';
-                
-                bookings.forEach(({ id, data }) => {
-                    const deliveryCard = createDeliveryCard(data, id);
-                    deliveriesList.appendChild(deliveryCard);
-
-                    // Initialize tracking map for assigned deliveries
-                    if (data.assignedDriver && 
-                        data.status !== 'Delivered' && 
-                        data.status !== 'Cancelled') {
+                    if (booking.assignedDriver && (booking.status !== 'Delivered' && booking.status !== 'Cancelled')) {
                         initializeTrackingMap(
-                            id,
-                            data.assignedDriver,
-                            data.pickupLocation,
-                            data.dropoffLocation
+                            bookingId,
+                            booking.assignedDriver,
+                            booking.pickupLocation,
+                            booking.dropoffLocation
                         );
                     }
                 });
-
-                loadingSpinner.style.display = 'none';
+                
+                await Promise.all(promises);
+                
+                // Add event listeners for the new "Cancel Booking" buttons
+                deliveriesList.querySelectorAll('.action-btn.cancel').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const bookingId = e.target.closest('.delivery-card').dataset.bookingId;
+                        if (bookingId) {
+                            cancelBooking(bookingId);
+                        }
+                    });
+                });
+                
+                applyStoredLanguage(); // Apply language after content is loaded
             }
 
-            // Function to create delivery card
-            function createDeliveryCard(booking, bookingId) {
+
+            // Function to create and return a delivery card HTML element
+            function createDeliveryCard(booking, bookingId, driverInfo = {}) {
                 const card = document.createElement('div');
                 card.className = 'delivery-card';
+                card.dataset.bookingId = bookingId;
+                const status = booking.status || 'Pending';
+                const statusClass = `status-${status.toLowerCase().replace(/\s/g, '-')}`;
 
-                // Get status class
-                const statusClass = booking.status ? booking.status.toLowerCase().replace(/\s+/g, '-') : 'pending';
-
-                // Extract data with fallbacks
-                const parcelType = booking.parcelDetails?.type || 'N/A';
-                const parcelWeight = booking.parcelDetails?.weightKg ? `${booking.parcelDetails.weightKg} kg` : 'N/A';
-                const isFragile = booking.parcelDetails?.isFragile ? 'Yes' : 'No';
                 const pickupName = booking.pickupLocation?.name || 'N/A';
                 const dropoffName = booking.dropoffLocation?.name || 'N/A';
-                const recipientName = booking.recipient?.name || 'N/A';
-                const recipientContact = booking.recipient?.contact || 'N/A';
-                const fareAmount = typeof booking.fareAmount === 'number' ? 
-                    `UGX ${booking.fareAmount.toLocaleString()}` : 'N/A';
-                const driverName = booking.driverName || booking.assignedDriver || 'Not assigned';
+                const currentLang = localStorage.getItem('selectedLanguage') || 'en';
+                const statusText = translations[currentLang]?.[`status${status.replace(/\s/g, '')}`] || status;
+                const goodsDescription = booking.goodsDescription || '';
 
-                // Format booking date
-                let formattedBookingDate = 'N/A';
-                if (booking.bookingDate) {
-                    try {
-                        if (typeof booking.bookingDate.toDate === 'function') {
-                            formattedBookingDate = booking.bookingDate.toDate().toLocaleString();
-                        } else if (booking.bookingDate instanceof Date) {
-                            formattedBookingDate = booking.bookingDate.toLocaleString();
-                        } else {
-                            formattedBookingDate = new Date(booking.bookingDate).toLocaleString();
-                        }
-                    } catch (e) {
-                        formattedBookingDate = 'N/A';
-                    }
-                }
+                const contactButton = driverInfo.phoneNumber ? 
+                    `<a href="tel:${driverInfo.phoneNumber}" class="action-btn contact" data-translate="contactBtn">Contact Driver</a>` : '';
 
                 card.innerHTML = `
-                    <div class="delivery-header">
-                        <div class="delivery-id">Booking #${bookingId.substring(0, 8)}</div>
-                        <div class="delivery-status status-${statusClass}">${booking.status || 'Pending'}</div>
+                    <div class="delivery-card-header">
+                        <h4>Booking #${bookingId.substring(0, 8)}...</h4>
+                        <span class="status-badge ${statusClass}" data-original-status="${status}">${statusText}</span>
                     </div>
-                    
                     <div class="delivery-details">
                         <div class="detail-item">
-                            <h4>Type</h4>
-                            <p>${booking.deliveryType === 'direct_delivery' ? 'Direct Delivery' : 'Collection Point'}</p>
+                            <strong data-translate="fare">Fare:</strong> <p>UGX ${typeof booking.fareAmount === 'number' ? booking.fareAmount.toLocaleString('en-UG') : 'N/A'}</p>
                         </div>
                         <div class="detail-item">
-                            <h4>Fare</h4>
-                            <p>${fareAmount}</p>
+                            <strong data-translate="pickup">Pickup:</strong> <p>${pickupName}</p>
                         </div>
                         <div class="detail-item">
-                            <h4>Pickup</h4>
-                            <p>${pickupName}</p>
+                            <strong data-translate="dropoff">Dropoff:</strong> <p>${dropoffName}</p>
                         </div>
-                        <div class="detail-item">
-                            <h4>Dropoff</h4>
-                            <p>${dropoffName}</p>
+                        <div class="delivery-details-section">
+                            <strong data-translate="goodsTransported">Goods Transported:</strong>
+                            <p>${goodsDescription}</p>
                         </div>
-                        <div class="detail-item">
-                            <h4>Recipient</h4>
-                            <p>${recipientName}</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>Contact</h4>
-                            <p>${recipientContact}</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>Booked On</h4>
-                            <p>${formattedBookingDate}</p>
-                        </div>
-                        <div class="detail-item">
-                            <h4>Driver</h4>
-                            <p>${driverName}</p>
-                        </div>
+                        ${booking.assignedDriver ? `
+                            <div class="detail-item">
+                                <strong data-translate="driver">Driver:</strong> <p>${driverInfo.name || 'Assigned'}</p>
+                            </div>
+                            <div class="detail-item">
+                                <strong data-translate="vehiclePlate">Vehicle Plate:</strong> <p>${driverInfo.vehiclePlate || 'N/A'}</p>
+                            </div>
+                        ` : ''}
                     </div>
-                    
-                    <div class="parcel-details">
-                        <div class="detail-item">
-                            <h4>Parcel Details</h4>
-                            <p>${parcelType}, ${parcelWeight}, Fragile: ${isFragile}</p>
-                        </div>
+                    ${booking.assignedDriver && (status !== 'Delivered' && status !== 'Cancelled') ? `<div class="delivery-map-container" id="map-${bookingId}"></div>` : ''}
+                    <div class="card-actions">
+                        ${status === 'Pending' ? `<button class="action-btn cancel" data-translate="cancelBtn">Cancel Booking</button>` : ''}
+                        ${contactButton}
+                        ${booking.assignedDriver && (status !== 'Delivered' && status !== 'Cancelled') ? `<button class="action-btn track" data-translate="trackBtn">Track</button>` : ''}
                     </div>
-                    
-                    ${(booking.assignedDriver && booking.status !== 'Delivered' && booking.status !== 'Cancelled') ? 
-                        `<div id="map-${bookingId}" class="tracking-map"></div>
-                         <div class="tracking-info">
-                             <i class="fas fa-map-marker-alt"></i> Live tracking map for your delivery
-                         </div>` : ''}
                 `;
-
                 return card;
             }
 
@@ -937,125 +1384,84 @@
             // Function to initialize Leaflet map for tracking
             async function initializeTrackingMap(bookingId, driverId, pickupLoc, dropoffLoc) {
                 const mapContainer = document.getElementById(`map-${bookingId}`);
-                if (!mapContainer) {
-                    console.warn(`Map container not found for booking ${bookingId}`);
+                if (!mapContainer || activeTrackingMaps[bookingId]) {
                     return;
                 }
 
-                try {
-                    // Initialize Leaflet map
-                    const map = L.map(`map-${bookingId}`).setView([0.3475, 32.5822], 13);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    }).addTo(map);
+                const map = L.map(mapContainer).setView([0.3475, 32.5822], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
 
-                    // Store map reference
-                    activeTrackingMaps[bookingId] = { 
-                        map: map, 
-                        driverMarker: null, 
-                        pickupMarker: null, 
-                        dropoffMarker: null, 
-                        unsubscribe: null 
-                    };
+                activeTrackingMaps[bookingId] = { map: map, driverMarker: null, pickupMarker: null, dropoffMarker: null, unsubscribe: null };
 
-                    // Add Pickup and Dropoff Markers
-                    const latLngsToFit = [];
-                    
-                    if (pickupLoc?.geopoint?.latitude && pickupLoc?.geopoint?.longitude) {
-                        const pickupLatLng = [pickupLoc.geopoint.latitude, pickupLoc.geopoint.longitude];
-                        activeTrackingMaps[bookingId].pickupMarker = L.marker(pickupLatLng, { icon: locationIcon })
-                            .addTo(map)
-                            .bindPopup(`Pickup: ${pickupLoc.name || 'N/A'}`);
-                        latLngsToFit.push(pickupLatLng);
-                    }
-                    
-                    if (dropoffLoc?.geopoint?.latitude && dropoffLoc?.geopoint?.longitude) {
-                        const dropoffLatLng = [dropoffLoc.geopoint.latitude, dropoffLoc.geopoint.longitude];
-                        activeTrackingMaps[bookingId].dropoffMarker = L.marker(dropoffLatLng, { icon: locationIcon })
-                            .addTo(map)
-                            .bindPopup(`Dropoff: ${dropoffLoc.name || 'N/A'}`);
-                        latLngsToFit.push(dropoffLatLng);
-                    }
+                const latLngsToFit = [];
+                if (pickupLoc && typeof pickupLoc.lat === 'number' && typeof pickupLoc.lng === 'number') {
+                    activeTrackingMaps[bookingId].pickupMarker = L.marker([pickupLoc.lat, pickupLoc.lng], { icon: locationIcon })
+                        .addTo(map)
+                        .bindPopup(`Pickup: ${pickupLoc.name || 'N/A'}`);
+                    latLngsToFit.push([pickupLoc.lat, pickupLoc.lng]);
+                }
+                if (dropoffLoc && typeof dropoffLoc.lat === 'number' && typeof dropoffLoc.lng === 'number') {
+                    activeTrackingMaps[bookingId].dropoffMarker = L.marker([dropoffLoc.lat, dropoffLoc.lng], { icon: locationIcon })
+                        .addTo(map)
+                        .bindPopup(`Dropoff: ${dropoffLoc.name || 'N/A'}`);
+                    latLngsToFit.push([dropoffLoc.lat, dropoffLoc.lng]);
+                }
 
-                    // Fit map to bounds of markers
-                    if (latLngsToFit.length > 0) {
-                        map.fitBounds(L.latLngBounds(latLngsToFit).pad(0.2));
-                    }
+                if (latLngsToFit.length > 0) {
+                    map.fitBounds(L.latLngBounds(latLngsToFit).pad(0.2));
+                }
 
-                    // Listen for driver location updates
-                    const driverRef = doc(db, "users", driverId);
-                    const unsubscribeDriverLocation = onSnapshot(driverRef, (docSnap) => {
-                        if (docSnap.exists()) {
-                            const driverData = docSnap.data();
-                            const driverLocation = driverData.lastKnownLocation;
-
-                            if (driverLocation?.latitude && driverLocation?.longitude) {
-                                const driverLatLng = [driverLocation.latitude, driverLocation.longitude];
-                                
-                                if (activeTrackingMaps[bookingId].driverMarker) {
-                                    activeTrackingMaps[bookingId].driverMarker.setLatLng(driverLatLng);
-                                } else {
-                                    activeTrackingMaps[bookingId].driverMarker = L.marker(driverLatLng, { icon: driverIcon })
-                                        .addTo(map)
-                                        .bindPopup(`Driver: ${driverData.name || 'N/A'}`);
-                                }
-                                
-                                // Update map view to include driver
-                                const currentLatLngs = [...latLngsToFit, driverLatLng];
-                                map.fitBounds(L.latLngBounds(currentLatLngs).pad(0.2));
+                const driverRef = doc(db, "users", driverId);
+                const unsubscribeDriverLocation = onSnapshot(driverRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const driverData = docSnap.data();
+                        const driverLocation = driverData.lastKnownLocation;
+                        if (driverLocation && typeof driverLocation.lat === 'number' && typeof driverLocation.lng === 'number') {
+                            const driverLatLng = L.latLng(driverLocation.lat, driverLocation.lng);
+                            if (activeTrackingMaps[bookingId].driverMarker) {
+                                activeTrackingMaps[bookingId].driverMarker.setLatLng(driverLatLng);
                             } else {
-                                // Remove driver marker if location not available
-                                if (activeTrackingMaps[bookingId].driverMarker) {
-                                    map.removeLayer(activeTrackingMaps[bookingId].driverMarker);
-                                    activeTrackingMaps[bookingId].driverMarker = null;
-                                }
+                                activeTrackingMaps[bookingId].driverMarker = L.marker(driverLatLng, { icon: driverIcon })
+                                    .addTo(map)
+                                    .bindPopup(`Driver: ${driverData.name || 'N/A'}`);
+                            }
+                            const currentLatLngs = [...latLngsToFit, driverLatLng];
+                            map.fitBounds(L.latLngBounds(currentLatLngs).pad(0.2));
+                        } else {
+                            if (activeTrackingMaps[bookingId].driverMarker) {
+                                map.removeLayer(activeTrackingMaps[bookingId].driverMarker);
+                                activeTrackingMaps[bookingId].driverMarker = null;
                             }
                         }
-                    }, (error) => {
-                        console.error("Error listening to driver location:", error);
-                    });
-
-                    activeTrackingMaps[bookingId].unsubscribe = unsubscribeDriverLocation;
-
-                } catch (error) {
-                    console.error("Error initializing tracking map:", error);
-                    // Hide map container on error
-                    if (mapContainer) {
-                        mapContainer.style.display = 'none';
+                    } else {
+                        if (activeTrackingMaps[bookingId].driverMarker) {
+                            map.removeLayer(activeTrackingMaps[bookingId].driverMarker);
+                            activeTrackingMaps[bookingId].driverMarker = null;
+                        }
                     }
-                }
+                }, (error) => {
+                    console.error("Error listening to driver location:", error);
+                });
+
+                activeTrackingMaps[bookingId].unsubscribe = unsubscribeDriverLocation;
             }
 
-            // Function to clean up all active map instances and their listeners
             function cleanupTrackingMaps() {
                 for (const bookingId in activeTrackingMaps) {
-                    try {
-                        // Unsubscribe from Firestore listener
-                        if (activeTrackingMaps[bookingId].unsubscribe) {
-                            activeTrackingMaps[bookingId].unsubscribe();
-                        }
-                        
-                        // Remove Leaflet map instance
-                        if (activeTrackingMaps[bookingId].map) {
-                            activeTrackingMaps[bookingId].map.remove();
-                        }
-                    } catch (error) {
-                        console.error(`Error cleaning up map for booking ${bookingId}:`, error);
+                    if (activeTrackingMaps[bookingId].unsubscribe) {
+                        activeTrackingMaps[bookingId].unsubscribe();
                     }
-                    
-                    // Remove from tracking object
+                    if (activeTrackingMaps[bookingId].map) {
+                        activeTrackingMaps[bookingId].map.remove();
+                    }
                     delete activeTrackingMaps[bookingId];
                 }
             }
 
-            // Show error message
-            function showError(message) {
-                if (errorText) errorText.textContent = message;
-                if (errorMessageDiv) errorMessageDiv.style.display = 'block';
-                if (loadingSpinner) loadingSpinner.style.display = 'none';
-            }
-
-            // Call cleanup on page unload
+            // Initial calls
+            applyStoredLanguage();
             window.addEventListener('beforeunload', cleanupTrackingMaps);
         });
     </script>
