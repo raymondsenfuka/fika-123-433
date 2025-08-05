@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Driver Dashboard | FikaConnect</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css"><style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <style>
     /* Enhanced Driver Dashboard Styles */
     :root {
-        --primary-color: #28a745;
-        --primary-dark: #1e7e34;
+        --primary-color: #047857;
+        --primary-dark: #035a42;
         --secondary-color: #6c757d;
         --accent-color: #20c997;
         --danger-color: #dc3545;
@@ -21,10 +24,11 @@
         --dark-text: #212529;
         --border-color: #dee2e6;
         --white: #ffffff;
-        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         --transition: all 0.3s ease;
         --header-height: 70px;
         --sidebar-width: 260px;
+        --border-radius: 12px;
     }
 
     body {
@@ -43,100 +47,102 @@
         --light-bg: #121212;
         --dark-text: #f8f9fa;
         --border-color: #343a40;
-        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         background-color: var(--light-bg);
         color: var(--dark-text);
     }
 
-    .container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 20px;
-    }
-
-    /* Header Enhancements */
-    .page-header {
-        background-color: var(--white);
-        box-shadow: var(--card-shadow);
-        padding: 15px 0;
+    /* Modern Top Navigation Bar */
+    .top-nav {
         position: sticky;
         top: 0;
         z-index: 1000;
+        background-color: var(--white);
+        box-shadow: var(--card-shadow);
         height: var(--header-height);
         display: flex;
         align-items: center;
+        padding: 0 20px;
+        transition: var(--transition);
     }
 
-    body.dark-mode .page-header {
+    body.dark-mode .top-nav {
         background-color: #1e1e1e;
     }
 
-    .header-content {
+    .nav-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
         width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
     }
 
-    .logo-container {
+    .nav-left {
         display: flex;
         align-items: center;
+        gap: 20px;
     }
 
-    .logo-container h1 {
-        margin: 0;
-        font-size: 1.6em;
-    }
-
-    .logo-container h1 a {
-        text-decoration: none;
-        color: var(--primary-color);
+    .logo {
+        font-family: 'Poppins', sans-serif;
         font-weight: 700;
-        display: flex;
-        align-items: center;
-    }
-
-    .logo-container h1 a::before {
-        content: "🚚";
-        margin-right: 10px;
-        font-size: 1.5em;
-    }
-
-    .main-nav {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .nav-links {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .nav-links a {
+        font-size: 1.6rem;
+        color: var(--primary-color);
         text-decoration: none;
-        color: var(--dark-text);
-        padding: 10px 15px;
-        font-weight: 600;
-        transition: var(--transition);
-        border-radius: 30px;
-        font-size: 0.95em;
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    body.dark-mode .nav-links a {
+    .logo i {
+        color: var(--accent-color);
+    }
+
+    .nav-center {
+        flex: 1;
+        max-width: 400px;
+        margin: 0 20px;
+    }
+
+    .search-bar {
+        position: relative;
+        width: 100%;
+    }
+
+    .search-bar input {
+        width: 100%;
+        padding: 10px 15px 10px 40px;
+        border-radius: 30px;
+        border: 1px solid var(--border-color);
+        background-color: rgba(4, 120, 87, 0.05);
+        font-family: 'Inter', sans-serif;
+        font-size: 0.95rem;
+        transition: var(--transition);
+    }
+
+    body.dark-mode .search-bar input {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid #343a40;
         color: var(--white);
     }
 
-    .nav-links a:hover {
-        color: var(--white);
-        background-color: var(--primary-color);
+    .search-bar input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.2);
     }
 
-    .nav-actions {
+    .search-bar i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--secondary-color);
+    }
+
+    .nav-right {
         display: flex;
         align-items: center;
         gap: 15px;
@@ -158,7 +164,11 @@
     }
 
     .theme-toggle:hover {
-        background: rgba(40, 167, 69, 0.1);
+        background: rgba(4, 120, 87, 0.1);
+    }
+
+    body.dark-mode .theme-toggle:hover {
+        background: rgba(4, 120, 87, 0.2);
     }
 
     .notification-bell {
@@ -180,20 +190,23 @@
     }
 
     .notification-bell:hover {
-        background: rgba(40, 167, 69, 0.1);
+        background: rgba(4, 120, 87, 0.1);
+    }
+
+    body.dark-mode .notification-bell:hover {
+        background: rgba(4, 120, 87, 0.2);
     }
 
     .notification-bell .badge {
         position: absolute;
-        top: -5px;
-        right: -5px;
+        top: -3px;
+        right: -3px;
         background-color: var(--danger-color);
         color: white;
         border-radius: 50%;
         padding: 2px 6px;
         font-size: 0.6em;
         font-weight: bold;
-        display: none;
         min-width: 18px;
         height: 18px;
         display: flex;
@@ -201,31 +214,67 @@
         justify-content: center;
     }
 
-    .notification-bell.has-unread .badge {
-        display: flex;
-    }
-
-    .logout-btn {
+    .nav-profile {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 15px;
-        background-color: var(--danger-color);
-        color: var(--white);
-        border-radius: 30px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: var(--transition);
-        border: none;
+        gap: 10px;
         cursor: pointer;
-        font-size: 0.95em;
+        padding: 5px;
+        border-radius: 30px;
+        transition: var(--transition);
     }
 
-    .logout-btn:hover {
-        background-color: #c82333;
-        transform: translateY(-2px);
+    .nav-profile:hover {
+        background: rgba(4, 120, 87, 0.1);
     }
 
+    body.dark-mode .nav-profile:hover {
+        background: rgba(4, 120, 87, 0.2);
+    }
+
+    .profile-img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--primary-color);
+    }
+
+    .profile-info {
+        display: flex;
+        flex-direction: column;
+        text-align: right;
+    }
+
+    .profile-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--dark-text);
+    }
+
+    body.dark-mode .profile-name {
+        color: var(--white);
+    }
+
+    .profile-role {
+        font-size: 0.8rem;
+        color: var(--secondary-color);
+    }
+
+    body.dark-mode .profile-role {
+        color: #adb5bd;
+    }
+
+    .dropdown-arrow {
+        color: var(--secondary-color);
+        transition: var(--transition);
+    }
+
+    .nav-profile.active .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
+    /* Mobile Menu Toggle */
     .menu-toggle {
         display: none;
         background: transparent;
@@ -243,7 +292,11 @@
     }
 
     .menu-toggle:hover {
-        background: rgba(40, 167, 69, 0.1);
+        background: rgba(4, 120, 87, 0.1);
+    }
+
+    body.dark-mode .menu-toggle:hover {
+        background: rgba(4, 120, 87, 0.2);
     }
 
     /* Mobile Menu */
@@ -317,7 +370,11 @@
     }
 
     .mobile-theme-toggle:hover {
-        background: rgba(40, 167, 69, 0.1);
+        background: rgba(4, 120, 87, 0.1);
+    }
+
+    body.dark-mode .mobile-theme-toggle:hover {
+        background: rgba(4, 120, 87, 0.2);
     }
 
     .mobile-logout-btn {
@@ -341,1047 +398,683 @@
         background-color: #c82333;
     }
 
-    /* Dashboard Content */
-    .form-container {
-        padding: 30px 0;
-        flex-grow: 1;
-    }
-
-    .dashboard-header {
-        text-align: center;
-        margin-bottom: 30px;
-    }
-
-    .dashboard-header h2 {
-        font-size: 2em;
-        color: var(--primary-color);
-        margin-bottom: 10px;
-    }
-
-    .dashboard-header p {
-        font-size: 1.1em;
-        color: var(--secondary-color);
-    }
-
-    body.dark-mode .dashboard-header p {
-        color: #adb5bd;
-    }
-
-    /* Location Tracking Controls */
-    .location-tracking-controls {
-        background-color: #e9f5ff;
-        border: 1px solid #b8daff;
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
-        box-shadow: var(--card-shadow);
-        transition: var(--transition);
-    }
-
-    body.dark-mode .location-tracking-controls {
-        background-color: #1a3c5e;
-        border: 1px solid #2a5a8c;
-    }
-
-    .location-tracking-controls:hover {
-        transform: translateY(-3px);
-    }
-
-    .location-tracking-controls h3 {
-        color: var(--primary-color);
-        margin-bottom: 20px;
-        font-size: 1.5em;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .location-tracking-buttons {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
-
-    .location-tracking-buttons button {
-        padding: 12px 20px;
-        font-size: 1em;
-        border-radius: 8px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: var(--transition);
-        border: none;
-        cursor: pointer;
-    }
-
-    .primary-btn {
-        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-        color: white;
-        box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
-    }
-
-    .primary-btn:hover:not(:disabled) {
-        background: linear-gradient(90deg, var(--primary-dark), #1baa7f);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
-    }
-
-    .danger-btn {
-        background-color: var(--danger-color);
-        color: white;
-        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
-    }
-
-    .danger-btn:hover:not(:disabled) {
-        background-color: #c82333;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
-    }
-
-    .danger-btn:disabled {
-        background-color: #adb5bd;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-
-    .service-radius-control {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
-
-    .service-radius-control label {
-        font-weight: 600;
-        color: var(--dark-text);
-    }
-
-    body.dark-mode .service-radius-control label {
-        color: var(--white);
-    }
-
-    .service-radius-control select {
-        padding: 10px 15px;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        background-color: var(--white);
-        font-size: 1em;
-        color: var(--dark-text);
-        transition: var(--transition);
-    }
-
-    body.dark-mode .service-radius-control select {
-        background-color: #343a40;
-        color: var(--white);
-        border: 1px solid #495057;
-    }
-
-    .service-radius-control select:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
-    }
-
-    #bookingsInRange {
-        font-weight: 600;
-        color: var(--primary-color);
-        background: rgba(40, 167, 69, 0.1);
-        padding: 8px 15px;
-        border-radius: 30px;
-    }
-
-    #locationStatus {
-        font-weight: 600;
-        color: var(--secondary-color);
-        padding: 12px 15px;
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.03);
-        display: inline-block;
-    }
-
-    body.dark-mode #locationStatus {
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    #locationStatus .tracking-on {
-        color: var(--primary-color);
-    }
-
-    #locationStatus .tracking-off {
-        color: var(--danger-color);
-    }
-
-    /* Dashboard Sections */
-    .dashboard-sections {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 30px;
-        margin-bottom: 30px;
-    }
-
-    @media (min-width: 992px) {
-        .dashboard-sections {
-            grid-template-columns: 1fr 1fr;
-        }
-    }
-
-    .section-card {
-        background-color: var(--white);
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: var(--card-shadow);
-        transition: var(--transition);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    body.dark-mode .section-card {
-        background-color: #1e1e1e;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .section-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    }
-
-    .section-card h3 {
-        font-size: 1.5em;
-        color: var(--primary-color);
-        margin-bottom: 25px;
-        text-align: center;
-        padding-bottom: 15px;
-        border-bottom: 2px solid rgba(40, 167, 69, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-
-    body.dark-mode .section-card h3 {
-        border-bottom: 2px solid rgba(40, 167, 69, 0.4);
-    }
-
-    .section-card .loading-spinner,
-    .section-card .no-items-message,
-    .section-card .error-message {
-        text-align: center;
-        padding: 30px;
-        font-size: 1.1em;
-        color: var(--secondary-color);
-        border-radius: 8px;
-    }
-
-    body.dark-mode .section-card .loading-spinner,
-    body.dark-mode .section-card .no-items-message,
-    body.dark-mode .section-card .error-message {
-        color: #adb5bd;
-    }
-
-    .section-card .loading-spinner {
-        color: var(--primary-color);
-    }
-
-    .section-card .loading-spinner i {
-        margin-right: 10px;
-    }
-
-    .section-card .error-message {
-        color: #721c24;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-    }
-
-    body.dark-mode .section-card .error-message {
-        background-color: #721c24;
-        border: 1px solid #f5c6cb;
-        color: #f8d7da;
-    }
-
-    /* Delivery Items */
-    .delivery-item {
-        border: 1px solid #e0e0e0;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        background-color: #fefefe;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        position: relative;
-        transition: var(--transition);
-    }
-
-    body.dark-mode .delivery-item {
-        background-color: #2d2d2d;
-        border: 1px solid #444;
-    }
-
-    .delivery-item:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-    .delivery-item.available {
-        border-left: 5px solid var(--accent-color);
-    }
-
-    .delivery-item.assigned {
-        border-left: 5px solid var(--primary-color);
-    }
-
-    .delivery-item strong {
-        color: var(--dark-text);
-    }
-
-    body.dark-mode .delivery-item strong {
-        color: var(--white);
-    }
-
-    .delivery-item p {
-        margin: 8px 0;
-        color: var(--secondary-color);
-        line-height: 1.5;
-    }
-
-    body.dark-mode .delivery-item p {
-        color: #adb5bd;
-    }
-
-    .booking-id-small {
-        font-size: 0.8em;
-        color: var(--secondary-color);
-        position: absolute;
-        top: 15px;
-        right: 20px;
-        background: rgba(0, 0, 0, 0.05);
-        padding: 3px 8px;
-        border-radius: 20px;
-    }
-
-    body.dark-mode .booking-id-small {
-        background: rgba(255, 255, 255, 0.1);
-        color: #adb5bd;
-    }
-
-    /* Status Badges */
-    .status-badge {
-        display: inline-block;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 0.8em;
-        font-weight: 600;
-        text-transform: uppercase;
-        margin-left: 10px;
-    }
-
-    .status-badge.Pending {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-
-    .status-badge.Assigned {
-        background-color: #d1ecf1;
-        color: #0c5460;
-    }
-
-    .status-badge.InProgress {
-        background-color: #e2e3e5;
-        color: #383d41;
-    }
-
-    .status-badge.Completed {
-        background-color: #d4edda;
-        color: #155724;
-    }
-
-    .status-badge.Cancelled {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-
-    .status-badge.PickedUp {
-        background-color: #add8e6;
-        color: #00008b;
-    }
-
-    .status-badge.InTransit {
-        background-color: #ffdead;
-        color: #a0522d;
-    }
-
-    .status-badge.Paid {
-        background-color: #d4edda;
-        color: #155724;
-    }
-
-    .status-badge.PendingPayment {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-
-    body.dark-mode .status-badge.Pending {
-        background-color: #856404;
-        color: #fff3cd;
-    }
-
-    body.dark-mode .status-badge.Assigned {
-        background-color: #0c5460;
-        color: #d1ecf1;
-    }
-
-    body.dark-mode .status-badge.InProgress {
-        background-color: #383d41;
-        color: #e2e3e5;
-    }
-
-    body.dark-mode .status-badge.Completed {
-        background-color: #155724;
-        color: #d4edda;
-    }
-
-    body.dark-mode .status-badge.Cancelled {
-        background-color: #721c24;
-        color: #f8d7da;
-    }
-
-    body.dark-mode .status-badge.PickedUp {
-        background-color: #00008b;
-        color: #add8e6;
-    }
-
-    body.dark-mode .status-badge.InTransit {
-        background-color: #a0522d;
-        color: #ffdead;
-    }
-
-    body.dark-mode .status-badge.Paid {
-        background-color: #155724;
-        color: #d4edda;
-    }
-
-    body.dark-mode .status-badge.PendingPayment {
-        background-color: #856404;
-        color: #fff3cd;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 10px;
-        margin-top: 20px;
-        justify-content: flex-end;
-        border-top: 1px dashed #eee;
-        padding-top: 20px;
-        flex-wrap: wrap;
-    }
-
-    body.dark-mode .action-buttons {
-        border-top: 1px dashed #444;
-    }
-
-    .action-buttons.available-actions {
-        justify-content: space-between;
-    }
-
-    .btn {
-        padding: 10px 15px;
-        border-radius: 8px;
-        font-size: 0.9em;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: var(--transition);
-        border: none;
-        cursor: pointer;
-        text-decoration: none;
-        text-align: center;
-    }
-
-    .btn:hover {
-        transform: translateY(-2px);
-    }
-
-    .primary-btn {
-        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-        color: white;
-        box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
-    }
-
-    .primary-btn:hover:not(:disabled) {
-        background: linear-gradient(90deg, var(--primary-dark), #1baa7f);
-        box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
-    }
-
-    .danger-btn {
-        background-color: var(--danger-color);
-        color: white;
-        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
-    }
-
-    .danger-btn:hover:not(:disabled) {
-        background-color: #c82333;
-        box-shadow: 0 6px 15px rgba(220, 53, 69, 0.4);
-    }
-
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-
-    /* Status Dropdown */
-    .status-dropdown-container {
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px dashed #eee;
-        text-align: right;
-    }
-
-    body.dark-mode .status-dropdown-container {
-        border-top: 1px dashed #444;
-    }
-
-    .status-dropdown {
-        padding: 10px 15px;
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-        background-color: var(--white);
-        font-size: 0.95em;
-        margin-right: 10px;
-        color: var(--dark-text);
-        transition: var(--transition);
-    }
-
-    body.dark-mode .status-dropdown {
-        background-color: #343a40;
-        color: var(--white);
-        border: 1px solid #495057;
-    }
-
-    .status-dropdown:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
-    }
-
-    .status-update-btn {
-        background-color: var(--primary-color);
-        color: #fff;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: var(--transition);
-        font-weight: 600;
-        box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
-    }
-
-    .status-update-btn:hover {
-        background-color: var(--primary-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
-    }
-
-    .update-message {
-        font-size: 0.9em;
-        margin-top: 10px;
-        text-align: right;
-        color: #28a745;
-        font-weight: 600;
-        padding: 8px 12px;
-        border-radius: 8px;
-        display: none;
-    }
-
-    .update-message.error {
-        color: #dc3545;
-        background: rgba(220, 53, 69, 0.1);
-    }
-
-    .update-message.success {
-        color: #28a745;
-        background: rgba(40, 167, 69, 0.1);
-    }
-
-    /* Communication and Navigation Buttons */
-    .communication-buttons,
-    .navigation-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 15px;
-        justify-content: flex-end;
-    }
-
-    /* Clickable Locations */
-    .clickable-location {
-        cursor: pointer;
-        text-decoration: underline;
-        color: var(--primary-color);
-        font-weight: 600;
-        transition: var(--transition);
-        padding: 2px 5px;
-        border-radius: 4px;
-    }
-
-    .clickable-location:hover {
-        background: rgba(40, 167, 69, 0.1);
-        text-decoration: none;
-    }
-
-    /* Map Section */
-    .map-section {
-        background-color: var(--white);
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: var(--card-shadow);
-        transition: var(--transition);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        margin-bottom: 30px;
-    }
-
-    body.dark-mode .map-section {
-        background-color: #1e1e1e;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .map-section:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    }
-
-    .map-section h3 {
-        font-size: 1.5em;
-        color: var(--primary-color);
-        margin-bottom: 25px;
-        text-align: center;
-        padding-bottom: 15px;
-        border-bottom: 2px solid rgba(40, 167, 69, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-
-    body.dark-mode .map-section h3 {
-        border-bottom: 2px solid rgba(40, 167, 69, 0.4);
-    }
-
-    #driverNavigationMap {
-        height: 500px;
-        width: 100%;
-        border-radius: 10px;
-        margin-top: 20px;
-        border: 1px solid #ddd;
-        background: #f8f9fa;
-    }
-
-    body.dark-mode #driverNavigationMap {
-        border: 1px solid #495057;
-        background: #2d2d2d;
-    }
-
-    .map-status-message {
-        text-align: center;
-        margin-top: 15px;
-        font-size: 0.9em;
-        color: var(--secondary-color);
-        font-weight: 500;
-        padding: 10px;
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.03);
-    }
-
-    body.dark-mode .map-status-message {
-        background: rgba(255, 255, 255, 0.05);
-        color: #adb5bd;
-    }
-
-    /* Notifications Dropdown */
-    .notifications-dropdown {
-        position: absolute;
-        top: calc(var(--header-height) + 10px);
-        right: 10px;
-        background-color: var(--white);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        box-shadow: var(--card-shadow);
-        width: 320px;
-        max-height: 450px;
-        overflow-y: auto;
-        z-index: 1000;
-        display: none;
-        animation: fadeIn 0.3s ease;
-    }
-
-    body.dark-mode .notifications-dropdown {
-        background-color: #1e1e1e;
-        border: 1px solid #343a40;
-    }
-
-    .notifications-dropdown.active {
-        display: block;
-    }
-
-    .notifications-dropdown h4 {
-        padding: 15px 20px;
-        margin: 0;
-        border-bottom: 1px solid var(--border-color);
-        color: var(--primary-color);
-        font-size: 1.2em;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    body.dark-mode .notifications-dropdown h4 {
-        border-bottom: 1px solid #343a40;
-    }
-
-    .notifications-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .notifications-list li {
-        padding: 15px 20px;
-        border-bottom: 1px solid var(--border-color);
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    body.dark-mode .notifications-list li {
-        border-bottom: 1px solid #343a40;
-    }
-
-    .notifications-list li:last-child {
-        border-bottom: none;
-    }
-
-    .notifications-list li:hover {
-        background-color: rgba(40, 167, 69, 0.05);
-    }
-
-    body.dark-mode .notifications-list li:hover {
-        background-color: rgba(40, 167, 69, 0.1);
-    }
-
-    .notifications-list li.unread {
-        background-color: rgba(32, 201, 151, 0.1);
-        font-weight: 600;
-    }
-
-    body.dark-mode .notifications-list li.unread {
-        background-color: rgba(32, 201, 151, 0.15);
-    }
-
-    .notifications-list li .notification-message {
-        font-size: 0.95em;
-        color: var(--dark-text);
-        line-height: 1.4;
-    }
-
-    body.dark-mode .notifications-list li .notification-message {
-        color: var(--white);
-    }
-
-    .notifications-list li .notification-time {
-        font-size: 0.75em;
-        color: var(--secondary-color);
-        display: block;
-        margin-top: 8px;
-    }
-
-    body.dark-mode .notifications-list li .notification-time {
-        color: #adb5bd;
-    }
-
-    .notifications-dropdown .no-notifications {
+    /* Main Content */
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
         padding: 30px 20px;
-        text-align: center;
-        color: var(--secondary-color);
-        font-style: italic;
-    }
-
-    body.dark-mode .notifications-dropdown .no-notifications {
-        color: #adb5bd;
-    }
-
-    /* Booking Message */
-    .booking-message {
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 15px;
-        text-align: center;
-        font-weight: 500;
-        display: none;
-    }
-
-    .booking-message.success-message {
-        background-color: rgba(40, 167, 69, 0.1);
-        color: #28a745;
-        border: 1px solid rgba(40, 167, 69, 0.3);
-    }
-
-    .booking-message.error-message {
-        background-color: rgba(220, 53, 69, 0.1);
-        color: #dc3545;
-        border: 1px solid rgba(220, 53, 69, 0.3);
-    }
-
-    .booking-message.info-message {
-        background-color: rgba(23, 162, 184, 0.1);
-        color: #17a2b8;
-        border: 1px solid rgba(23, 162, 184, 0.3);
-    }
-
-    /* Page Footer */
-    .page-footer {
-        background-color: var(--dark-text);
-        color: #fff;
-        text-align: center;
-        padding: 25px 0;
-        font-size: 0.95em;
-        margin-top: auto;
+        flex-grow: 1;
     }
 
     /* Responsive Improvements */
     @media (max-width: 991px) {
-        .menu-toggle {
-            display: flex;
-        }
-
-        .nav-links,
-        .nav-actions {
-            display: none;
-        }
-
-        .dashboard-header h2 {
-            font-size: 1.8em;
-        }
-
-        .location-tracking-controls {
-            padding: 20px;
-        }
-
-        .location-tracking-buttons {
-            flex-direction: column;
-        }
-
-        .location-tracking-buttons button {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .service-radius-control {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .action-buttons {
-            flex-direction: column;
-        }
-
-        .action-buttons button {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .status-dropdown-container {
-            text-align: center;
-        }
-
-        .status-dropdown {
-            margin-right: 0;
-            margin-bottom: 10px;
-            width: 100%;
-        }
-
-        .status-update-btn {
-            width: 100%;
-        }
-
-        .communication-buttons,
-        .navigation-buttons {
-            flex-direction: column;
-        }
-
-        .communication-buttons a,
-        .navigation-buttons a {
-            width: 100%;
-            justify-content: center;
-        }
-
-        #driverNavigationMap {
-            height: 400px;
+        .nav-center {
+            max-width: 300px;
         }
     }
 
     @media (max-width: 768px) {
-        .container {
-            padding: 0 15px;
+        .menu-toggle {
+            display: flex;
         }
 
-        .form-container {
-            padding: 20px 0;
+        .nav-center {
+            display: none;
+        }
+
+        .nav-right .theme-toggle,
+        .nav-right .notification-bell,
+        .nav-right .nav-profile {
+            display: none;
+        }
+
+        .mobile-menu-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .mobile-profile-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        body.dark-mode .mobile-profile-section {
+            border-bottom: 1px solid #343a40;
+        }
+
+        .mobile-profile-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-color);
+        }
+
+        .mobile-profile-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mobile-profile-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .mobile-profile-role {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+        }
+
+        body.dark-mode .mobile-profile-role {
+            color: #adb5bd;
+        }
+
+        .mobile-notifications {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .notification-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            background: rgba(4, 120, 87, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body.dark-mode .notification-item {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .notification-item i {
+            color: var(--primary-color);
         }
 
         .dashboard-header {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
-        .dashboard-header h2 {
-            font-size: 1.6em;
+        .dashboard-sections {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
         }
 
         .section-card {
-            padding: 25px 20px;
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .section-card {
+            background-color: #1e1e1e;
         }
 
         .section-card h3 {
-            font-size: 1.3em;
-        }
-
-        .delivery-item {
-            padding: 15px;
-        }
-
-        .booking-id-small {
-            position: static;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-
-        .map-section {
-            padding: 25px 20px;
-        }
-
-        .map-section h3 {
-            font-size: 1.3em;
-        }
-
-        #driverNavigationMap {
-            height: 350px;
-        }
-
-        .notifications-dropdown {
-            width: calc(100% - 40px);
-            right: 20px;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .page-header {
-            padding: 10px 0;
-        }
-
-        .logo-container h1 {
-            font-size: 1.4em;
-        }
-
-        .logo-container h1 a::before {
-            font-size: 1.2em;
-        }
-
-        .dashboard-header h2 {
-            font-size: 1.4em;
-        }
-
-        .dashboard-header p {
-            font-size: 1em;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            color: var(--primary-color);
         }
 
         .location-tracking-controls {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .location-tracking-controls {
+            background-color: #1e1e1e;
+        }
+
+        .location-tracking-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .primary-btn, .danger-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--white);
+        }
+
+        .primary-btn {
+            background-color: var(--primary-color);
+        }
+
+        .primary-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .danger-btn {
+            background-color: var(--danger-color);
+        }
+
+        .danger-btn:hover {
+            background-color: #c82333;
+        }
+
+        .primary-btn:disabled, .danger-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .booking-message, .update-message {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .info-message {
+            background-color: #e2f3ff;
+            color: #0c5460;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        body.dark-mode .info-message {
+            background-color: #0c5460;
+            color: #e2f3ff;
+        }
+        body.dark-mode .success-message {
+            background-color: #155724;
+            color: #d4edda;
+        }
+        body.dark-mode .error-message {
+            background-color: #721c24;
+            color: #f8d7da;
+        }
+
+        .delivery-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             padding: 15px;
+            margin-bottom: 15px;
+            background-color: var(--light-bg);
+            transition: var(--transition);
         }
 
-        .location-tracking-controls h3 {
-            font-size: 1.3em;
+        body.dark-mode .delivery-item {
+            background-color: #2a2a2a;
+            border-color: #444;
         }
 
-        .section-card {
-            padding: 20px 15px;
+        .delivery-item p {
+            margin: 5px 0;
+            font-size: 0.95rem;
         }
 
-        .section-card h3 {
-            font-size: 1.2em;
+        .delivery-item strong {
+            color: var(--dark-text);
+        }
+        
+        body.dark-mode .delivery-item strong {
+            color: var(--white);
         }
 
+        .delivery-item.available {
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .delivery-item.assigned {
+            border-left: 5px solid var(--info-color);
+        }
+        
+        .booking-id-small {
+            font-size: 0.75rem;
+            color: var(--secondary-color);
+            float: right;
+            font-weight: 600;
+        }
+
+        .clickable-location {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .action-buttons, .communication-buttons, .navigation-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .status-dropdown-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .status-dropdown {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--white);
+            color: var(--dark-text);
+            font-family: 'Inter', sans-serif;
+        }
+
+        body.dark-mode .status-dropdown {
+            background-color: #343a40;
+            color: var(--white);
+            border-color: #444;
+        }
+        
+        .loading-spinner, .no-items-message {
+            text-align: center;
+            padding: 20px;
+            color: var(--secondary-color);
+        }
+
+        .loading-spinner i {
+            margin-right: 10px;
+        }
+        
+        .tracking-on {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .tracking-off {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+        
         .map-section {
-            padding: 20px 15px;
-        }
-
-        .map-section h3 {
-            font-size: 1.2em;
+            height: 500px;
+            padding: 20px;
         }
 
         #driverNavigationMap {
-            height: 300px;
+            height: calc(100% - 70px);
+            border-radius: 8px;
+            z-index: 1; /* Ensure map is visible */
         }
     }
+      /* New Styles for Reorganized Layout */
+        .dashboard-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
 
-    /* Animations */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+        .section-card h3 {
+            margin-bottom: 25px;
+            position: relative;
+            padding-bottom: 10px;
+        }
 
-    .dashboard-header,
-    .location-tracking-controls,
-    .dashboard-sections,
-    .map-section {
-        animation: fadeIn 0.6s ease-out;
-    }
+        .section-card h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--primary-color);
+            border-radius: 2px;
+        }
 
-    .delivery-item {
-        animation: fadeIn 0.4s ease-out;
-    }
+        /* --- New Available Booking Card Style --- */
+        .booking-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
 
-    .delivery-item:nth-child(2) {
-        animation-delay: 0.1s;
-    }
+        body.dark-mode .booking-card {
+            background-color: #1e1e1e;
+        }
 
-    .delivery-item:nth-child(3) {
-        animation-delay: 0.2s;
-    }
+        .booking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
 
-    .delivery-item:nth-child(4) {
-        animation-delay: 0.3s;
+        .booking-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .booking-card-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        body.dark-mode .booking-card-header h4 {
+            color: var(--accent-color);
+        }
+
+        .booking-card-header .fare {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .booking-card-info {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .booking-card-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .booking-card-info p i {
+            color: var(--primary-color);
+            font-size: 1.1em;
+        }
+
+        .booking-card-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+
+        /* --- New Assigned Delivery List Style --- */
+        .assigned-delivery-item {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: var(--transition);
+        }
+
+        body.dark-mode .assigned-delivery-item {
+            background-color: #1e1e1e;
+        }
+
+        .assigned-delivery-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        body.dark-mode .assigned-delivery-item-header {
+            border-bottom: 1px solid #343a40;
+        }
+
+        .assigned-delivery-item-header h5 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--primary-dark);
+        }
+
+        body.dark-mode .assigned-delivery-item-header h5 {
+            color: var(--accent-color);
+        }
+
+        .assigned-delivery-item-header .status-tag {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: var(--white);
+        }
+
+        .status-tag.DriverAssigned { background-color: var(--info-color); }
+        .status-tag.PickedUp { background-color: var(--primary-color); }
+        .status-tag.InTransit { background-color: var(--warning-color); color: var(--dark-text); }
+
+        .assigned-delivery-item-body p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+
+        .assigned-delivery-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .status-update-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .status-update-btn:hover {
+            background-color: var(--primary-dark);
+        }
+        /* New Styles for Driver Performance Section */
+.metric-box {
+    background-color: var(--light-bg);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    flex: 1;
+    transition: var(--transition);
+}
+
+body.dark-mode .metric-box {
+    background-color: #2a2a2a;
+}
+
+.metric-box h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.metric-box p {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+body.dark-mode .metric-box p {
+    color: var(--accent-color);
+}
+
+/* New Styles for the Vehicle Management Card */
+    .vehicle-details-card {
+        padding: 20px;
+        background-color: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
     }
-</style>
+    body.dark-mode .vehicle-details-card {
+        background-color: #1e1e1e;
+    }
+    .vehicle-form-group {
+        margin-bottom: 15px;
+    }
+    .vehicle-form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .vehicle-form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: var(--light-bg);
+        color: var(--dark-text);
+        transition: var(--transition);
+    }
+    body.dark-mode .vehicle-form-group input {
+        background-color: #333;
+        border-color: #444;
+        color: white;
+    }
+    .vehicle-form-group input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(22, 160, 133, 0.2);
+    }
+    .save-vehicle-btn {
+        width: 100%;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    .save-vehicle-btn:hover {
+        background-color: var(--primary-dark);
+    }
+    </style>
 </head>
 <body>
+    <header class="top-nav">
+        <div class="nav-container">
+            <div class="nav-left">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="#" class="logo">
+                    <i class="fas fa-truck-moving"></i>
+                    FikaConnect
+                </a>
+            </div>
 
-    <header class="page-header">
-        <div class="container">
-            <h1><a href="landing.html">FikaConnect</a></h1>
-            <nav class="main-nav">
-                <a href="driver-dashboard.html">Dashboard</a>
-                <a href="about.html">About Us</a>
+            <div class="nav-center">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search bookings, deliveries...">
+                </div>
+            </div>
+
+            <div class="nav-right">
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+
                 <div class="notification-bell" id="notificationBell">
                     <i class="fas fa-bell"></i>
-                    <span class="badge" id="notificationCount">0</span>
+                    <span class="badge" id="notificationCount"></span>
                 </div>
-                <a href="#" id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            </nav>
-        </div>
-        <div class="notifications-dropdown" id="notificationsDropdown">
-            <h4>Notifications</h4>
-            <ul class="notifications-list" id="notificationsList">
-                </ul>
-            <p id="noNotificationsMessage" class="no-notifications" style="display: none;">No notifications.</p>
+
+                <div class="nav-profile" id="navProfile">
+                    <div class="profile-info">
+                        <span class="profile-name" id="userNameDisplay">J. Doe</span>
+                        <span class="profile-role">Driver</span>
+                    </div>
+                    <img src="https://via.placeholder.com/40" alt="Profile" class="profile-img">
+                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="container form-container">
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-content">
+            <div class="mobile-profile-section">
+                <img src="https://via.placeholder.com/50" alt="Profile" class="mobile-profile-img">
+                <div class="mobile-profile-info">
+                    <span class="mobile-profile-name">J. Doe</span>
+                    <span class="mobile-profile-role">Driver</span>
+                </div>
+            </div>
+
+            <div class="mobile-nav-links">
+                <a href="#"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="#"><i class="fas fa-box"></i> Deliveries</a>
+                <a href="#"><i class="fas fa-history"></i> History</a>
+                <a href="#"><i class="fas fa-truck-moving"></i> Vehicles</a>
+                <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                <a href="#"><i class="fas fa-headset"></i> Support</a>
+            </div>
+
+            <div class="mobile-notifications">
+                <div class="notification-item">
+                    <i class="fas fa-bell"></i>
+                    <span>New booking assigned - ID: FC2345</span>
+                </div>
+                <div class="notification-item">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Reminder: Vehicle maintenance due</span>
+                </div>
+                <div class="notification-item">
+                    <i class="fas fa-star"></i>
+                    <span>Customer rated your service - 5 stars</span>
+                </div>
+            </div>
+
+            <div class="mobile-nav-actions">
+                <div class="mobile-theme-toggle" id="mobileThemeToggle">
+                    <i class="fas fa-moon"></i>
+                    <span>Dark Mode</span>
+                </div>
+                <a href="#" class="mobile-logout-btn" id="mobileLogoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <main class="container">
         <div class="dashboard-header">
-            <h2>Welcome, <span id="userNameDisplay">Driver</span>!</h2>
-            <p>Your FikaConnect dashboard for managing deliveries.</p>
+            <h1>Driver Dashboard</h1>
+            <p>Welcome back, J. Doe. Here's what's happening with your deliveries today.</p>
         </div>
 
         <div class="location-tracking-controls">
@@ -1404,46 +1097,93 @@
             <p id="locationStatus">Location tracking is currently: <span class="tracking-off">OFF</span></p>
             <div id="locationMessage" class="booking-message" style="display: none;"></div>
         </div>
-        <div class="dashboard-sections">
-            <div class="section-card">
-                <h3><i class="fas fa-box-open"></i> Available Bookings</h3>
-                <div id="availableBookingsLoading" class="loading-spinner" style="display: none;">
-                    <i class="fas fa-spinner fa-spin"></i> Loading available bookings...
+       <main class="container">
+    <div class="dashboard-sections">
+        <div class="section-card" id="driverPerformanceCard">
+            <h3><i class="fas fa-chart-line"></i> Driver Performance</h3>
+            <div id="performanceMetrics" style="display: flex; justify-content: space-around; gap: 20px; text-align: center;">
+                <div class="metric-box">
+                    <h4>Total Deliveries</h4>
+                    <p id="totalDeliveries">0</p>
                 </div>
-                <div id="noAvailableBookingsMessage" class="no-items-message" style="display: none;">
-                    <p>No new bookings available at the moment.</p>
+                <div class="metric-box">
+                    <h4>Total Earnings</h4>
+                    <p id="totalEarnings">UGX 0</p>
                 </div>
-                <div id="availableBookingsError" class="error-message" style="display: none;"></div>
-                <div id="availableBookingsList">
-                    </div>
+                <div class="metric-box">
+                    <h4>Average Rating</h4>
+                    <p id="averageRating">N/A</p>
+                </div>
             </div>
-
-            <div class="section-card">
-                <h3><i class="fas fa-truck"></i> My Assigned Deliveries</h3>
-                <div id="assignedDeliveriesLoading" class="loading-spinner" style="display: none;">
-                    <i class="fas fa-spinner fa-spin"></i> Loading your assigned deliveries...
-                </div>
-                <div id="noAssignedDeliveriesMessage" class="no-items-message" style="display: none;">
-                    <p>You currently have no assigned deliveries.</p>
-                </div>
-                <div id="assignedDeliveriesError" class="error-message" style="display: none;"></div>
-                <div id="assignedDeliveriesList">
-                    </div>
+            <div id="performanceLoading" class="loading-spinner" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i> Loading performance data...
             </div>
         </div>
 
-        <div class="section-card map-section">
-            <h3><i class="fas fa-map-marked-alt"></i> Delivery Map</h3>
-            <div id="driverNavigationMap"></div>
-            <p id="mapStatusMessage" class="map-status-message"></p>
+        <div class="section-card">
+            <h3><i class="fas fa-box-open"></i> Available Bookings</h3>
+            </div>
+
+       <div class="section-card">
+    <h3><i class="fas fa-truck"></i> My Assigned Deliveries</h3>
+    <div class="assigned-deliveries-header">
+        <button id="showRouteBtn" class="btn primary-btn"><i class="fas fa-route"></i> Show Optimized Route</button>
+    </div>
+    <div id="assignedDeliveriesLoading" class="loading-spinner" style="display: none;">
+        <i class="fas fa-spinner fa-spin"></i> Loading your assigned deliveries...
+    </div>
+    <div id="noAssignedDeliveriesMessage" class="no-items-message" style="display: none;">
+        <p>You currently have no assigned deliveries.</p>
+    </div>
+    <div id="assignedDeliveriesError" class="error-message" style="display: none;"></div>
+    <div id="assignedDeliveriesList">
+    </div>
+</div>
+<main class="container">
+        <div class="dashboard-sections">
+            <div class="section-card" id="driverPerformanceCard">
+                </div>
+            
+            <div class="section-card vehicle-details-card">
+                <h3><i class="fas fa-car"></i> Vehicle Management</h3>
+                <form id="vehicleDetailsForm">
+                    <div class="vehicle-form-group">
+                        <label for="vehicleMake">Make:</label>
+                        <input type="text" id="vehicleMake" name="vehicleMake" placeholder="e.g., Toyota">
+                    </div>
+                    <div class="vehicle-form-group">
+                        <label for="vehicleModel">Model:</label>
+                        <input type="text" id="vehicleModel" name="vehicleModel" placeholder="e.g., Vitz">
+                    </div>
+                    <div class="vehicle-form-group">
+                        <label for="licensePlate">License Plate:</label>
+                        <input type="text" id="licensePlate" name="licensePlate" placeholder="e.g., UAX 123">
+                    </div>
+                    <div class="vehicle-form-group">
+                        <label for="insuranceExpiration">Insurance Expiration:</label>
+                        <input type="date" id="insuranceExpiration" name="insuranceExpiration">
+                    </div>
+                    <button type="submit" id="saveVehicleBtn" class="save-vehicle-btn"><i class="fas fa-save"></i> Save Vehicle Details</button>
+                </form>
+                <div id="vehicleMessage" class="booking-message" style="display: none;"></div>
+            </div>
+
+            <div class="section-card">
+                </div>
+
+            <div class="section-card">
+                </div>
         </div>
     </main>
-<!-- Add before closing </body> tag -->
-<script type="module">
+
+    
+  <script type="module">
+    // Import necessary Firebase and Leaflet libraries
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, query, where, orderBy, onSnapshot, GeoPoint, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, query, where, orderBy, onSnapshot, GeoPoint, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    // Your Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyDq3uO76nnqqPgPaFfXpOTEnFSXRqXneWU",
         authDomain: "fika-connect-5f844.firebaseapp.com",
@@ -1459,8 +1199,9 @@
     const db = getFirestore(app);
 
     // --- DOM Elements ---
-    const logoutBtn = document.getElementById('logoutBtn');
+    const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
     const userNameDisplay = document.getElementById('userNameDisplay');
+    const mobileUserNameDisplay = document.querySelector('.mobile-profile-name');
     const availableBookingsList = document.getElementById('availableBookingsList');
     const availableBookingsLoading = document.getElementById('availableBookingsLoading');
     const noAvailableBookingsMessage = document.getElementById('noAvailableBookingsMessage');
@@ -1469,6 +1210,28 @@
     const assignedDeliveriesLoading = document.getElementById('assignedDeliveriesLoading');
     const noAssignedDeliveriesMessage = document.getElementById('noAssignedDeliveriesMessage');
     const assignedDeliveriesError = document.getElementById('assignedDeliveriesError');
+    const showRouteBtn = document.getElementById('showRouteBtn');
+    // New DOM elements for Performance
+    const totalDeliveriesEl = document.getElementById('totalDeliveries');
+    const totalEarningsEl = document.getElementById('totalEarnings');
+    const averageRatingEl = document.getElementById('averageRating');
+    const performanceLoadingEl = document.getElementById('performanceLoading');
+    // New DOM elements for Vehicle Management
+    const vehicleDetailsForm = document.getElementById('vehicleDetailsForm');
+    const vehicleMakeInput = document.getElementById('vehicleMake');
+    const vehicleModelInput = document.getElementById('vehicleModel');
+    const licensePlateInput = document.getElementById('licensePlate');
+    const insuranceExpirationInput = document.getElementById('insuranceExpiration');
+    const saveVehicleBtn = document.getElementById('saveVehicleBtn');
+    const vehicleMessageDiv = document.getElementById('vehicleMessage');
+
+
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const themeToggle = document.getElementById('themeToggle');
+    const mobileThemeToggle = document.getElementById('mobileThemeToggle');
+    const navProfile = document.getElementById('navProfile');
+    const body = document.body;
 
     // Location Tracking DOM elements
     const startTrackingBtn = document.getElementById('startTrackingBtn');
@@ -1482,21 +1245,107 @@
     const driverNavigationMapDiv = document.getElementById('driverNavigationMap');
     const mapStatusMessage = document.getElementById('mapStatusMessage');
 
-    // NEW Notification DOM elements
-    const notificationBell = document.getElementById('notificationBell');
-    const notificationCount = document.getElementById('notificationCount');
-    const notificationsDropdown = document.getElementById('notificationsDropdown');
-    const notificationsList = document.getElementById('notificationsList');
-    const noNotificationsMessage = document.getElementById('noNotificationsMessage');
-
     // --- Global Variables ---
     let CURRENT_DRIVER_ID = null;
     let CURRENT_DRIVER_LOCATION = null;
     let locationWatcherId = null;
     let availableBookingsData = [];
+    let assignedDeliveriesData = []; // Store assigned deliveries globally
     let map;
     let currentMarker = null;
-    let unreadNotificationCount = 0;
+    let routingControl = null; // New variable to hold the routing control
+
+    // --- UI & Event Handlers ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Apply saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            body.classList.add('dark-mode');
+            updateThemeIcons();
+        }
+
+        // Mobile menu toggle
+        if (menuToggle && mobileMenu) {
+            menuToggle.addEventListener('click', () => {
+                mobileMenu.classList.toggle('active');
+            });
+        }
+
+        // Theme toggle buttons
+        if (themeToggle) {
+            themeToggle.addEventListener('click', toggleTheme);
+        }
+        if (mobileThemeToggle) {
+            mobileThemeToggle.addEventListener('click', toggleTheme);
+        }
+
+        // Profile dropdown toggle
+        if (navProfile) {
+            navProfile.addEventListener('click', () => {
+                navProfile.classList.toggle('active');
+            });
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', (event) => {
+            // Close mobile menu
+            if (mobileMenu && mobileMenu.classList.contains('active') && !menuToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
+                mobileMenu.classList.remove('active');
+            }
+            
+            // Close profile dropdown
+            if (navProfile && navProfile.classList.contains('active') && !navProfile.contains(event.target)) {
+                navProfile.classList.remove('active');
+            }
+        });
+
+        // Logout button for mobile menu
+        if (mobileLogoutBtn) {
+            mobileLogoutBtn.addEventListener('click', async () => {
+                if (locationWatcherId !== null) {
+                    stopLocationTracking();
+                }
+                await signOut(auth);
+                window.location.href = 'login.html';
+            });
+        }
+
+        // New: Show Route Button Handler
+        if (showRouteBtn) {
+            showRouteBtn.addEventListener('click', showOptimizedRoute);
+        }
+
+        // New: Vehicle Details Form Handler
+        if (vehicleDetailsForm) {
+            vehicleDetailsForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveVehicleDetails();
+            });
+        }
+    });
+
+    function toggleTheme() {
+        body.classList.toggle('dark-mode');
+        const isDark = body.classList.contains('dark-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        updateThemeIcons();
+    }
+
+    function updateThemeIcons() {
+        const isDark = body.classList.contains('dark-mode');
+        const icons = document.querySelectorAll('.theme-toggle i, .mobile-theme-toggle i');
+        icons.forEach(icon => {
+            if (isDark) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        });
+    }
 
     // --- Map Initialization ---
     function initDriverMap() {
@@ -1517,12 +1366,19 @@
             return;
         }
 
-        const location = [lat, lng];
-        map.setView(location, 15);
-
+        // Clear existing routing line if it exists
+        if (routingControl) {
+            map.removeControl(routingControl);
+            routingControl = null;
+        }
+        
+        // Remove existing marker if it's not a routing marker
         if (currentMarker) {
             map.removeLayer(currentMarker);
         }
+        
+        const location = [lat, lng];
+        map.setView(location, 15);
 
         currentMarker = L.marker(location).addTo(map)
             .bindPopup(`<b>${locationName}</b><br>Booking ID: ${bookingId.substring(0, 8)}`)
@@ -1532,26 +1388,6 @@
         mapStatusMessage.textContent = `Displaying: ${locationName} for Booking ID: ${bookingId.substring(0, 8)}`;
     }
 
-    // --- Event Listeners ---
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            if (locationWatcherId !== null) {
-                stopLocationTracking();
-            }
-            await signOut(auth);
-            window.location.href = 'login.html';
-        });
-    }
-
-    // Location Tracking Event Listeners
-    if (startTrackingBtn) startTrackingBtn.addEventListener('click', startLocationTracking);
-    if (stopTrackingBtn) stopTrackingBtn.addEventListener('click', stopLocationTracking);
-
-    // Service Radius Change Event Listener
-    if (serviceRadiusSelect) serviceRadiusSelect.addEventListener('change', () => {
-        filterAndDisplayAvailableBookings();
-    });
-
     // --- Location Tracking Functions ---
     function showLocationMessage(message, type) {
         if (!locationMessageDiv) return;
@@ -1560,6 +1396,16 @@
         locationMessageDiv.style.display = 'block';
         setTimeout(() => {
             locationMessageDiv.style.display = 'none';
+        }, 5000);
+    }
+    
+    function showVehicleMessage(message, type) {
+        if (!vehicleMessageDiv) return;
+        vehicleMessageDiv.textContent = message;
+        vehicleMessageDiv.className = `booking-message ${type}-message`;
+        vehicleMessageDiv.style.display = 'block';
+        setTimeout(() => {
+            vehicleMessageDiv.style.display = 'none';
         }, 5000);
     }
 
@@ -1588,7 +1434,7 @@
 
     function handleLocationError(error) {
         let message = "Error getting location: ";
-        switch(error.code) {
+        switch (error.code) {
             case error.PERMISSION_DENIED:
                 message += "Permission denied. Please allow location access.";
                 break;
@@ -1671,8 +1517,8 @@
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         const distance = R * c;
         return distance;
@@ -1694,7 +1540,6 @@
             availableBookingsData = [];
             snapshot.forEach((doc) => {
                 const bookingData = doc.data();
-                // Exclude bookings already declined by the current driver
                 if (!bookingData.declinedByDrivers || !bookingData.declinedByDrivers.includes(CURRENT_DRIVER_ID)) {
                     availableBookingsData.push({ id: doc.id, data: bookingData });
                 }
@@ -1723,13 +1568,17 @@
 
         onSnapshot(assignedQ, (snapshot) => {
             if (assignedDeliveriesList) assignedDeliveriesList.innerHTML = '';
+            assignedDeliveriesData = []; // Clear previous data
             if (snapshot.empty) {
                 if (noAssignedDeliveriesMessage) noAssignedDeliveriesMessage.style.display = 'block';
+                if (showRouteBtn) showRouteBtn.style.display = 'none';
             } else {
                 if (noAssignedDeliveriesMessage) noAssignedDeliveriesMessage.style.display = 'none';
+                if (showRouteBtn) showRouteBtn.style.display = 'block';
                 snapshot.forEach((doc) => {
                     const booking = doc.data();
                     const bookingId = doc.id;
+                    assignedDeliveriesData.push({ id: bookingId, data: booking }); // Store data
                     const item = createBookingItem(booking, bookingId, 'assigned');
                     if (assignedDeliveriesList) assignedDeliveriesList.appendChild(item);
                 });
@@ -1797,7 +1646,7 @@
     // --- Create Booking Item HTML ---
     function createBookingItem(booking, bookingId, type) {
         const item = document.createElement('div');
-        item.className = `delivery-item ${type}`;
+        item.dataset.bookingId = bookingId;
 
         // Safely get booking data with fallbacks
         const parcelDetails = booking.parcelDetails || booking.packageDetails || {};
@@ -1817,104 +1666,91 @@
         const paymentStatus = booking.paymentStatus || 'Pending';
         const fareAmount = booking.fareAmount || 0;
 
-        // Determine distance info
-        let distanceHtml = '';
-        if (type === 'assigned' && pickupLocation.geopoint && dropoffLocation.geopoint) {
-            const totalDistance = calculateDistance(
-                pickupLocation.geopoint.latitude,
-                pickupLocation.geopoint.longitude,
-                dropoffLocation.geopoint.latitude,
-                dropoffLocation.geopoint.longitude
-            );
-            distanceHtml = `<p>Estimated Total Trip Distance: <strong>${totalDistance.toFixed(2)} km</strong></p>`;
-        } else if (CURRENT_DRIVER_LOCATION && pickupLocation.geopoint) {
-            const distanceToPickup = calculateDistance(
-                CURRENT_DRIVER_LOCATION.lat,
-                CURRENT_DRIVER_LOCATION.lng,
-                pickupLocation.geopoint.latitude,
-                pickupLocation.geopoint.longitude
-            );
-            distanceHtml = `<p>Distance to Pickup: <strong>${distanceToPickup.toFixed(2)} km</strong></p>`;
-        }
+        if (type === 'available') {
+            item.className = 'booking-card';
 
-        // Communication buttons
-        let communicationButtonsHtml = '';
-        if (customerPhone || recipientContact) {
-            communicationButtonsHtml = `
-                <div class="communication-buttons">
-                    ${customerPhone ? `<a href="tel:${customerPhone}" class="btn primary-btn"><i class="fas fa-phone"></i> Call Customer</a>` : ''}
-                    ${recipientContact ? `<a href="tel:${recipientContact}" class="btn primary-btn"><i class="fas fa-phone"></i> Call Recipient</a>` : ''}
-                </div>
-            `;
-        }
-
-        // Navigation buttons
-        let navigationButtonsHtml = '';
-        if (type === 'assigned' && pickupLocation.geopoint && dropoffLocation.geopoint) {
-            const pickupLat = pickupLocation.geopoint.latitude;
-            const pickupLng = pickupLocation.geopoint.longitude;
-            const dropoffLat = dropoffLocation.geopoint.latitude;
-            const dropoffLng = dropoffLocation.geopoint.longitude;
-
-            let googleMapsPickupUrl = `https://www.google.com/maps/dir/?api=1&destination=${pickupLat},${pickupLng}&travelmode=driving`;
-            let googleMapsDropoffUrl = `https://www.google.com/maps/dir/?api=1&destination=${dropoffLat},${dropoffLng}&travelmode=driving`;
-
-            if (CURRENT_DRIVER_LOCATION) {
-                googleMapsPickupUrl += `&origin=${CURRENT_DRIVER_LOCATION.lat},${CURRENT_DRIVER_LOCATION.lng}`;
-                googleMapsDropoffUrl += `&origin=${CURRENT_DRIVER_LOCATION.lat},${CURRENT_DRIVER_LOCATION.lng}`;
+            // Determine distance to pickup
+            let distanceHtml = '';
+            if (CURRENT_DRIVER_LOCATION && pickupLocation.geopoint) {
+                const distanceToPickup = calculateDistance(
+                    CURRENT_DRIVER_LOCATION.lat,
+                    CURRENT_DRIVER_LOCATION.lng,
+                    pickupLocation.geopoint.latitude,
+                    pickupLocation.geopoint.longitude
+                );
+                distanceHtml = `<p>Distance to Pickup: <strong>${distanceToPickup.toFixed(2)} km</strong></p>`;
             }
 
-            navigationButtonsHtml = `
-                <div class="navigation-buttons">
-                    <a href="${googleMapsPickupUrl}" target="_blank" class="btn primary-btn"><i class="fas fa-map-marker-alt"></i> Navigate to Pickup</a>
-                    <a href="${googleMapsDropoffUrl}" target="_blank" class="btn primary-btn"><i class="fas fa-route"></i> Navigate to Dropoff</a>
+            item.innerHTML = `
+                <div class="booking-card-header">
+                    <h4><i class="fas fa-cube"></i> Booking ID: ${bookingId.substring(0, 8)}</h4>
+                    <span class="fare">UGX ${parseInt(fareAmount).toLocaleString() || 'N/A'}</span>
+                </div>
+                <div class="booking-card-info">
+                    <p><i class="fas fa-map-marker-alt"></i> Pickup: <span class="clickable-location"
+                            data-lat="${pickupLocation.geopoint?.latitude || 0}"
+                            data-lng="${pickupLocation.geopoint?.longitude || 0}"
+                            data-booking-id="${bookingId}">${pickupName}</span></p>
+                    <p><i class="fas fa-route"></i> Dropoff: <span class="clickable-location"
+                            data-lat="${dropoffLocation.geopoint?.latitude || 0}"
+                            data-lng="${dropoffLocation.geopoint?.longitude || 0}"
+                            data-booking-id="${bookingId}">${dropoffName}</span></p>
+                </div>
+                ${distanceHtml}
+                <div class="booking-card-actions">
+                    <button class="btn danger-btn decline-booking-btn" data-id="${bookingId}">
+                        <i class="fas fa-times-circle"></i> Decline
+                    </button>
+                    <button class="btn primary-btn accept-booking-btn" data-id="${bookingId}">
+                        <i class="fas fa-check-circle"></i> Accept
+                    </button>
+                </div>
+            `;
+        } else if (type === 'assigned') {
+            item.className = 'assigned-delivery-item';
+            const currentStatus = booking.status || 'Driver Assigned';
+            const statusClass = currentStatus.replace(/\s/g, '');
+
+            // Determine next action button text
+            let nextActionButtonText = '';
+            let nextStatus = '';
+            if (currentStatus === 'Driver Assigned') {
+                nextActionButtonText = 'Mark as Picked Up';
+                nextStatus = 'Picked Up';
+            } else if (currentStatus === 'Picked Up') {
+                nextActionButtonText = 'Mark as In Transit';
+                nextStatus = 'In Transit';
+            } else if (currentStatus === 'In Transit') {
+                nextActionButtonText = 'Mark as Completed';
+                nextStatus = 'Completed';
+            }
+
+            item.innerHTML = `
+                <div class="assigned-delivery-item-header">
+                    <h5>Booking ID: ${bookingId.substring(0, 8)}</h5>
+                    <span class="status-tag ${statusClass}">${currentStatus.toUpperCase()}</span>
+                </div>
+                <div class="assigned-delivery-item-body">
+                    <p><strong>Package:</strong> ${parcelType}, ${parcelWeight} kg</p>
+                    <p><strong>Pickup:</strong> <span class="clickable-location"
+                            data-lat="${pickupLocation.geopoint?.latitude || 0}"
+                            data-lng="${pickupLocation.geopoint?.longitude || 0}"
+                            data-booking-id="${bookingId}">${pickupName}</span></p>
+                    <p><strong>Dropoff:</strong> <span class="clickable-location"
+                            data-lat="${dropoffLocation.geopoint?.latitude || 0}"
+                            data-lng="${dropoffLocation.geopoint?.longitude || 0}"
+                            data-booking-id="${bookingId}">${dropoffName}</span></p>
+                    <p><strong>Fare:</strong> UGX ${parseInt(fareAmount).toLocaleString() || 'N/A'}</p>
+                </div>
+                <div class="assigned-delivery-actions">
+                    ${nextActionButtonText ? `
+                        <button class="status-update-btn" data-id="${bookingId}" data-status="${nextStatus}">
+                            <i class="fas fa-check"></i> ${nextActionButtonText}
+                        </button>
+                    ` : ''}
                 </div>
             `;
         }
-
-        item.innerHTML = `
-            <span class="booking-id-small">ID: ${bookingId.substring(0, 8)}</span>
-            <p><strong>Package:</strong> ${parcelType}, ${parcelWeight} kg</p>
-            <p>Pickup: <span class="clickable-location"
-                            data-lat="${pickupLocation.geopoint?.latitude || 0}"
-                            data-lng="${pickupLocation.geopoint?.longitude || 0}">${pickupName}</span></p>
-            <p>Dropoff: <span class="clickable-location"
-                              data-lat="${dropoffLocation.geopoint?.latitude || 0}"
-                              data-lng="${dropoffLocation.geopoint?.longitude || 0}">${dropoffName}</span></p>
-            <p>Customer: ${customerName}</p>
-            <p>Contact: ${customerPhone}</p>
-            ${recipientName && recipientName !== 'N/A' ? `<p>Recipient: ${recipientName} (Contact: ${recipientContact})</p>` : ''}
-            ${distanceHtml}
-            ${specialInstructions ? `<p>Instructions: ${specialInstructions}</p>` : ''}
-            <p>Payment Status: <span class="status-badge ${paymentStatus.replace(/\s/g, '')}">${paymentStatus}</span></p>
-            <p><strong>Fare:</strong> UGX ${parseInt(fareAmount).toLocaleString() || 'N/A'}</p>
-            ${communicationButtonsHtml}
-            ${navigationButtonsHtml}
-
-            ${type === 'available' ? `
-                <div class="action-buttons available-actions">
-                    <button class="btn danger-btn decline-booking-btn" data-id="${bookingId}">
-                        <i class="fas fa-times-circle"></i> Decline Booking
-                    </button>
-                    <button class="btn primary-btn accept-booking-btn" data-id="${bookingId}">
-                        <i class="fas fa-check-circle"></i> Accept Booking
-                    </button>
-                </div>
-            ` : ''}
-
-            ${type === 'assigned' ? `
-                <div class="status-dropdown-container">
-                    <select class="status-dropdown" data-id="${bookingId}">
-                        <option value="" disabled selected>Update Status</option>
-                        <option value="Picked Up">Picked Up</option>
-                        <option value="In Transit">In Transit</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                    <button class="status-update-btn primary-btn" data-id="${bookingId}">Update</button>
-                    <div class="update-message" id="updateMessage-${bookingId}" style="display:none;"></div>
-                </div>
-            ` : ''}
-        `;
 
         // Add event listeners for clickable locations
         item.querySelectorAll('.clickable-location').forEach(span => {
@@ -1922,8 +1758,9 @@
                 const lat = parseFloat(span.dataset.lat);
                 const lng = parseFloat(span.dataset.lng);
                 const name = span.textContent;
+                const id = span.dataset.bookingId;
                 if (!isNaN(lat) && !isNaN(lng)) {
-                    showLocationOnMap(lat, lng, name, bookingId);
+                    showLocationOnMap(lat, lng, name, id);
                 }
             });
         });
@@ -1931,16 +1768,191 @@
         if (type === 'available') {
             const acceptBtn = item.querySelector('.accept-booking-btn');
             const declineBtn = item.querySelector('.decline-booking-btn');
-            
             if (acceptBtn) acceptBtn.addEventListener('click', () => acceptBooking(bookingId));
             if (declineBtn) declineBtn.addEventListener('click', () => declineBooking(bookingId));
         } else if (type === 'assigned') {
             const updateBtn = item.querySelector('.status-update-btn');
-            if (updateBtn) updateBtn.addEventListener('click', () => updateBookingStatus(bookingId, item));
+            if (updateBtn) {
+                updateBtn.addEventListener('click', () => {
+                    const newStatus = updateBtn.dataset.status;
+                    if (newStatus) {
+                        updateBookingStatus(bookingId, newStatus, item);
+                    }
+                });
+            }
         }
 
         return item;
     }
+
+    // New: Function to show an optimized route on the map
+    function showOptimizedRoute() {
+        if (!map) {
+            console.warn("Map not initialized. Cannot show route.");
+            return;
+        }
+
+        if (assignedDeliveriesData.length === 0) {
+            alert("You have no assigned deliveries to optimize a route for.");
+            return;
+        }
+        
+        // Clear any previous routing control
+        if (routingControl) {
+            map.removeControl(routingControl);
+            routingControl = null;
+        }
+
+        // Create an array of waypoints, starting with the driver's current location
+        let waypoints = [];
+        if (CURRENT_DRIVER_LOCATION) {
+            waypoints.push(L.latLng(CURRENT_DRIVER_LOCATION.lat, CURRENT_DRIVER_LOCATION.lng));
+        } else {
+            alert("Please enable location tracking to start the route from your current position.");
+            return;
+        }
+
+        // Add all pickup and dropoff locations to the waypoints array
+        assignedDeliveriesData.forEach(delivery => {
+            const pickup = delivery.data.pickupLocation.geopoint;
+            const dropoff = delivery.data.dropoffLocation.geopoint;
+            
+            if (pickup && pickup.latitude && pickup.longitude) {
+                waypoints.push(L.latLng(pickup.latitude, pickup.longitude));
+            }
+            if (dropoff && dropoff.latitude && dropoff.longitude) {
+                waypoints.push(L.latLng(dropoff.latitude, dropoff.longitude));
+            }
+        });
+
+        // Initialize and add the routing control to the map
+        routingControl = L.Routing.control({
+            waypoints: waypoints,
+            routeWhileDragging: true,
+            geocoder: L.Control.Geocoder.nominatim(),
+            showAlternatives: true,
+            lineOptions: {
+                styles: [{ color: '#16a085', weight: 6 }]
+            }
+        }).addTo(map);
+
+        // Scroll to the map
+        driverNavigationMapDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // New: Function to fetch and display vehicle details
+    async function fetchAndDisplayVehicleDetails() {
+        if (!CURRENT_DRIVER_ID) return;
+
+        try {
+            const userDocRef = doc(db, "users", CURRENT_DRIVER_ID);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const vehicle = userData.vehicleDetails || {};
+                
+                if (vehicleMakeInput) vehicleMakeInput.value = vehicle.make || '';
+                if (vehicleModelInput) vehicleModelInput.value = vehicle.model || '';
+                if (licensePlateInput) licensePlateInput.value = vehicle.licensePlate || '';
+                if (insuranceExpirationInput) {
+                    const insuranceDate = vehicle.insuranceExpiration?.toDate();
+                    if (insuranceDate) {
+                        insuranceExpirationInput.value = insuranceDate.toISOString().split('T')[0];
+                    } else {
+                        insuranceExpirationInput.value = '';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching vehicle details:", error);
+            showVehicleMessage("Failed to load vehicle details.", 'error');
+        }
+    }
+
+    // New: Function to save vehicle details to Firestore
+    async function saveVehicleDetails() {
+        if (!CURRENT_DRIVER_ID) {
+            showVehicleMessage("Error: Driver not authenticated.", 'error');
+            return;
+        }
+        
+        saveVehicleBtn.disabled = true;
+        const originalText = saveVehicleBtn.innerHTML;
+        saveVehicleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        const vehicleData = {
+            make: vehicleMakeInput.value.trim(),
+            model: vehicleModelInput.value.trim(),
+            licensePlate: licensePlateInput.value.trim(),
+            insuranceExpiration: insuranceExpirationInput.value ? new Date(insuranceExpirationInput.value) : null,
+        };
+
+        try {
+            const userDocRef = doc(db, "users", CURRENT_DRIVER_ID);
+            await updateDoc(userDocRef, {
+                vehicleDetails: vehicleData
+            });
+            showVehicleMessage("Vehicle details saved successfully!", 'success');
+        } catch (error) {
+            console.error("Error saving vehicle details:", error);
+            showVehicleMessage("Failed to save vehicle details. Please try again.", 'error');
+        } finally {
+            saveVehicleBtn.disabled = false;
+            saveVehicleBtn.innerHTML = originalText;
+        }
+    }
+
+
+    // New function to fetch driver performance metrics
+    async function fetchDriverPerformance() {
+        if (!CURRENT_DRIVER_ID) {
+            console.warn("Driver ID not available. Cannot fetch performance.");
+            return;
+        }
+
+        if (performanceLoadingEl) performanceLoadingEl.style.display = 'block';
+
+        try {
+            // Fetch the driver's performance data from a single query
+            const q = query(collection(db, "bookings"), where("assignedDriver", "==", CURRENT_DRIVER_ID));
+            const querySnapshot = await getDocs(q);
+
+            let totalDeliveries = 0;
+            let totalEarnings = 0;
+            let totalRating = 0;
+            let deliveriesWithRating = 0;
+
+            querySnapshot.forEach((doc) => {
+                const booking = doc.data();
+                if (booking.status === "Completed") {
+                    totalDeliveries++;
+                    totalEarnings += booking.fareAmount || 0;
+                    if (booking.rating) {
+                        totalRating += booking.rating;
+                        deliveriesWithRating++;
+                    }
+                }
+            });
+
+            // Update the UI
+            if (totalDeliveriesEl) totalDeliveriesEl.textContent = totalDeliveries;
+            if (totalEarningsEl) totalEarningsEl.textContent = `UGX ${totalEarnings.toLocaleString()}`;
+            if (averageRatingEl) {
+                const avgRating = deliveriesWithRating > 0 ? (totalRating / deliveriesWithRating).toFixed(1) : 'N/A';
+                averageRatingEl.textContent = avgRating;
+            }
+
+            console.log(`Performance data fetched: ${totalDeliveries} deliveries, ${totalEarnings} earnings`);
+
+        } catch (error) {
+            console.error("Error fetching driver performance:", error);
+            // You can add an error message to the UI here if needed
+        } finally {
+            if (performanceLoadingEl) performanceLoadingEl.style.display = 'none';
+        }
+    }
+
 
     // --- Accept Booking Function ---
     async function acceptBooking(bookingId) {
@@ -1987,21 +1999,15 @@
             declineBtn.innerHTML = originalText;
         }
     }
-
+    
     // --- Update Booking Status Function ---
-    async function updateBookingStatus(bookingId, itemElement) {
-        const statusDropdown = itemElement.querySelector('.status-dropdown');
-        const newStatus = statusDropdown.value;
-        const updateMessageDiv = itemElement.querySelector(`#updateMessage-${bookingId}`);
+    async function updateBookingStatus(bookingId, newStatus, itemElement) {
+        const updateBtn = itemElement.querySelector('.status-update-btn');
+        if (!updateBtn) return;
 
-        if (!newStatus) {
-            if (updateMessageDiv) {
-                updateMessageDiv.textContent = 'Please select a status.';
-                updateMessageDiv.className = 'update-message error';
-                updateMessageDiv.style.display = 'block';
-            }
-            return;
-        }
+        const originalText = updateBtn.innerHTML;
+        updateBtn.disabled = true;
+        updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 
         try {
             const bookingRef = doc(db, "bookings", bookingId);
@@ -2013,19 +2019,16 @@
 
             await updateDoc(bookingRef, updateData);
             
-            if (updateMessageDiv) {
-                updateMessageDiv.textContent = `Status updated to ${newStatus}!`;
-                updateMessageDiv.className = 'update-message success';
-                updateMessageDiv.style.display = 'block';
-                setTimeout(() => updateMessageDiv.style.display = 'none', 3000);
-            }
+            // UI update will be handled automatically by the real-time listener.
+            // We just reset the button state after a successful update.
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalText;
+            
         } catch (error) {
             console.error("Error updating booking status:", error);
-            if (updateMessageDiv) {
-                updateMessageDiv.textContent = `Failed to update status: ${error.message}`;
-                updateMessageDiv.className = 'update-message error';
-                updateMessageDiv.style.display = 'block';
-            }
+            alert(`Failed to update status to ${newStatus}: ${error.message}`);
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalText;
         }
     }
 
@@ -2039,9 +2042,31 @@
 
                 if (userDocSnap.exists() && userDocSnap.data().isDriver) {
                     const userData = userDocSnap.data();
-                    if (userNameDisplay) userNameDisplay.textContent = userData.name || "Driver";
+                    const fullName = userData.name || "Driver";
+                    const firstName = fullName.split(' ')[0] || "Driver";
+
+                    // Update desktop and mobile user name displays
+                    if (userNameDisplay) userNameDisplay.textContent = firstName;
+                    if (mobileUserNameDisplay) mobileUserNameDisplay.textContent = fullName;
+                    
+                    // Add main dashboard welcome message
+                    const welcomeMessage = document.querySelector('.dashboard-header p');
+                    if (welcomeMessage) {
+                        welcomeMessage.textContent = `Welcome back, ${firstName}. Here's what's happening with your deliveries today.`;
+                    }
+
+                    // Initialize map and fetch data after user is authenticated and verified
                     initDriverMap();
                     fetchAndDisplayBookings();
+                    fetchDriverPerformance(); // Call the new function to load performance data
+                    fetchAndDisplayVehicleDetails(); // New: Fetch and display vehicle details
+                    
+                    // Attach location tracking listeners
+                    if (startTrackingBtn) startTrackingBtn.addEventListener('click', startLocationTracking);
+                    if (stopTrackingBtn) stopLocationTracking.disabled = true;
+                    if (stopTrackingBtn) stopTrackingBtn.addEventListener('click', stopLocationTracking);
+                    if (serviceRadiusSelect) serviceRadiusSelect.addEventListener('change', filterAndDisplayAvailableBookings);
+
                 } else {
                     alert("Access Denied: You are not authorized to view this page.");
                     await signOut(auth);
@@ -2055,85 +2080,7 @@
             window.location.href = 'login.html';
         }
     });
-
-    // Enhanced mobile menu and dark mode toggle functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const menuToggle = document.querySelector('.menu-toggle');
-        const mobileMenu = document.querySelector('.mobile-menu');
-        const themeToggle = document.querySelector('.theme-toggle');
-        const mobileThemeToggle = document.querySelector('.mobile-theme-toggle');
-        const body = document.body;
-        
-        // Mobile menu toggle
-        if (menuToggle && mobileMenu) {
-            menuToggle.addEventListener('click', function() {
-                mobileMenu.classList.toggle('active');
-            });
-        }
-        
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', function(event) {
-            if (mobileMenu && mobileMenu.classList.contains('active')) {
-                const isClickInsideMenu = mobileMenu.contains(event.target);
-                const isClickOnToggle = menuToggle && menuToggle.contains(event.target);
-                
-                if (!isClickInsideMenu && !isClickOnToggle) {
-                    mobileMenu.classList.remove('active');
-                }
-            }
-        });
-        
-        // Dark mode toggle
-        function toggleDarkMode() {
-            body.classList.toggle('dark-mode');
-            const isDarkMode = body.classList.contains('dark-mode');
-            localStorage.setItem('darkMode', isDarkMode);
-            
-            // Update theme toggle icons
-            const themeIcons = document.querySelectorAll('.theme-toggle i');
-            themeIcons.forEach(icon => {
-                if (isDarkMode) {
-                    icon.classList.remove('fa-moon');
-                    icon.classList.add('fa-sun');
-                } else {
-                    icon.classList.remove('fa-sun');
-                    icon.classList.add('fa-moon');
-                }
-            });
-        }
-        
-        // Apply saved dark mode preference
-        if (localStorage.getItem('darkMode') === 'true') {
-            body.classList.add('dark-mode');
-            const themeIcons = document.querySelectorAll('.theme-toggle i');
-            themeIcons.forEach(icon => {
-                icon.classList.remove('fa-moon');
-                icon.classList.add('fa-sun');
-            });
-        }
-        
-        // Theme toggle event listeners
-        if (themeToggle) {
-            themeToggle.addEventListener('click', toggleDarkMode);
-        }
-        
-        if (mobileThemeToggle) {
-            mobileThemeToggle.addEventListener('click', toggleDarkMode);
-        }
-        
-        // Close notifications dropdown when clicking outside
-        if (notificationBell && notificationsDropdown) {
-            document.addEventListener('click', function(event) {
-                const isClickInsideNotifications = notificationsDropdown.contains(event.target);
-                const isClickOnBell = notificationBell.contains(event.target);
-                
-                if (!isClickInsideNotifications && !isClickOnBell) {
-                    notificationsDropdown.classList.remove('active');
-                }
-            });
-        }
-    });
 </script>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </body>
 </html>
